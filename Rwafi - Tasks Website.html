@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شركة روافي - لوحة التحكم والإدارة</title>
+    <!-- استدعاء خط Cairo العصري -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg-page: #f1f5f9; 
+            --card-bg: #ffffff; 
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --gold: #d97706;
+            --gold-light: #fef3c7;
+            --orange-red: #ea580c;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --danger: #ef4444; 
+            --success: #22c55e; 
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: 'Cairo', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-page); 
+            color: var(--text-main); 
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .login-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 3000; padding: 15px;
+        }
+        .login-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 20px; width: 100%; max-width: 420px; padding: 25px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15); text-align: center;
+        }
+        .login-logo { font-size: 2.2rem; font-weight: 900; margin-bottom: 5px; letter-spacing: -1px; }
+        .login-card p { color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem; }
+        .login-card .form-group { text-align: right; margin-bottom: 15px; }
+        .login-card label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main); }
+        .login-card input {
+            width: 100%; padding: 12px 15px; background: #f8fafc;
+            border: 1px solid var(--border-color); border-radius: 10px;
+            font-family: inherit; font-size: 1rem; outline: none; transition: all 0.2s;
+        }
+        .login-card input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .btn-login {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white;
+            width: 100%; padding: 13px; border-radius: 10px; font-weight: 700;
+            font-size: 1rem; cursor: pointer; border: none; margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); transition: all 0.2s;
+        }
+
+        #mainApp { display: none; }
+
+        .navbar { 
+            background: var(--card-bg); border-bottom: 1px solid var(--border-color); 
+            padding: 12px 20px; display: flex; justify-content: space-between; 
+            align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow-sm);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .brand-logo { display: flex; align-items: center; gap: 10px; }
+        .brand-name { font-size: 1.6rem; font-weight: 900; letter-spacing: -1px; display: inline-flex; align-items: center; line-height: 1; }
+        .logo-ر { color: var(--orange-red); }
+        .logo-و { color: var(--gold); }
+        .logo-ا { color: var(--primary); }
+        .logo-ف { color: #0891b2; }
+        .logo-ي { color: #0891b2; }
+
+        .brand-sub {
+            font-size: 0.75rem; color: var(--gold); border: 1px solid #fde68a;
+            padding: 2px 8px; border-radius: 20px; font-weight: 700; background-color: var(--gold-light);
+        }
+
+        .nav-buttons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .container { max-width: 1400px; margin: 20px auto; padding: 0 15px; } 
+
+        .toolbar { 
+            background: var(--card-bg); padding: 15px; border-radius: 14px; 
+            border: 1px solid var(--border-color); display: flex; gap: 12px; 
+            flex-wrap: wrap; align-items: center; margin-bottom: 20px; box-shadow: var(--shadow-sm);
+        }
+        .toolbar input, .toolbar select { 
+            padding: 10px 14px; background: #f8fafc; border: 1px solid var(--border-color); 
+            border-radius: 10px; outline: none; color: var(--text-main); font-family: inherit; font-size: 0.9rem; transition: all 0.2s;
+        }
+        .toolbar input[type="text"] { flex-grow: 1; min-width: 200px; }
+        .toolbar input:focus, .toolbar select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+        .grid-tasks { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .task-card { 
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; 
+            padding: 18px; display: flex; flex-direction: column; justify-content: space-between; 
+            transition: all 0.3s ease; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+        }
+        .task-card:hover { border-color: #cbd5e1; box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .card-tools { display:flex; gap:6px; margin-bottom:10px; }
+        .card-tools button { background:#f1f5f9; color:#475569; padding:6px 9px; font-size:.8rem; }
+        .card-tools .pin-active { background:#fef3c7; color:#92400e; }
+        .drag-handle { touch-action:none; cursor:grab; }
+        .task-card.dragging { opacity:.55; }
+        .task-card.drop-target { outline:3px dashed #d97706; outline-offset:-4px; }
+        .task-card.in-progress { border-right: 5px solid #f59e0b; background: #fffbeb; animation: activeTaskGlow 2s ease-in-out infinite; }
+        @keyframes activeTaskGlow { 0%,100% { box-shadow: 0 0 0 1px #fcd34d; } 50% { box-shadow: 0 0 16px #f59e0b44; } }
+        .badge-active { color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; padding: 3px 8px; border-radius: 6px; font-size: .8rem; font-weight: 700; }
+        @media (prefers-reduced-motion: reduce) { .task-card.in-progress { animation: none; } }
+        .category-toggle { width:100%; text-align:right; background:transparent; color:inherit; font-size:inherit; }
+        .category-toggle:focus-visible { outline:2px solid var(--primary); }
+        .task-card.is-ended { border-right: 5px solid var(--success); background-color: #f0fdf4; }
+
+        .task-header { font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 1.05rem; }
+        
+        .supplier-balance-box {
+            background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px;
+            padding: 10px 12px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center;
+        }
+        .supplier-balance-label { font-size: 0.8rem; color: #0369a1; font-weight: 700; }
+        .supplier-balance-amount { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+
+        .task-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+        select { 
+            width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--border-color); 
+            background: #f8fafc; color: var(--text-main); font-size: 0.85rem; font-family: inherit; outline: none;
+        }
+        select:focus { border-color: var(--primary); }
+
+        button { 
+            border: none; padding: 9px 14px; border-radius: 10px; cursor: pointer; 
+            font-weight: 700; color: white; white-space: nowrap; font-family: inherit; transition: all 0.2s; font-size: 0.85rem;
+        }
+        .btn-start { background-color: var(--primary); }
+        .btn-start:hover { background-color: var(--primary-hover); }
+        .btn-end { background-color: var(--danger); }
+        .btn-end:hover { background-color: #dc2626; }
+        .btn-reset { background-color: #475569; font-size: 0.8rem; padding: 8px 12px; }
+        .btn-reset:hover { background-color: #334155; }
+        
+        .btn-link { 
+            background: #f8fafc; border: 1px solid var(--border-color); text-decoration: none; 
+            padding: 8px 12px; border-radius: 10px; color: var(--text-main); font-size: 0.85rem; 
+            display: inline-flex; align-items: center; gap: 5px; font-weight: 600;
+        }
+        .btn-link:hover { border-color: var(--primary); background: #fff; color: var(--primary); }
+        
+        .btn-supplier { background: linear-gradient(135deg, #f59e0b, var(--gold)); color: #fff; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.2); }
+
+        .badge-ended { background-color: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; border: 1px solid #bbf7d0; }
+
+        .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 25px; align-items: center; flex-wrap: wrap; }
+        .pagination button { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 15px; }
+        .pagination button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 18px;
+            width: 100%; max-width: 850px; max-height: 90vh; display: flex; flex-direction: column;
+            box-shadow: var(--shadow-lg); overflow: hidden; animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-sm { max-width: 400px; }
+        
+        @keyframes modalIn {
+            from { transform: scale(0.95) translateY(10px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        
+        .modal-header { padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 800; }
+        .modal-close { background: transparent; color: var(--text-muted); font-size: 1.6rem; padding: 0; line-height: 1; cursor: pointer; border: none; }
+        .modal-close:hover { color: var(--danger); }
+        
+        .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        
+        /* جعل الجدول متجاوباً على الجوال عبر تمرير أفقي سلس */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .supplier-table { width: 100%; border-collapse: collapse; margin-top: 5px; min-width: 550px; }
+        .supplier-table th, .supplier-table td { padding: 12px; text-align: right; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+        .supplier-table th { background: #f8fafc; color: var(--text-muted); font-weight: 700; }
+        
+        .input-inline { padding: 7px 10px; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); width: 100px; font-size: 0.85rem; outline: none; }
+        .input-inline:focus { border-color: var(--primary); }
+
+        .supplier-search-box {
+            width: 100%; padding: 11px 14px; background: #f8fafc; border: 1px solid var(--border-color);
+            border-radius: 10px; color: var(--text-main); font-size: 0.9rem; font-family: inherit; margin-bottom: 15px; outline: none;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
+        .form-group input { width: 100%; padding: 10px 12px; background: #fff; border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-main); font-size: 0.95rem; font-family: inherit; outline: none; }
+        
+        .btn-add-balance { background-color: var(--gold); color: #fff; padding: 7px 12px; font-size: 0.8rem; }
+
+        .notice-badge { font-size: 0.8rem; background: var(--gold-light); color: #b45309; padding: 10px 12px; border-radius: 10px; border: 1px solid #fde68a; display: block; margin-bottom: 15px; font-weight: 600; line-height: 1.4; }
+
+        .toast {
+            position: fixed; bottom: 20px; left: 15px; right: 15px; max-width: 400px; margin: 0 auto; padding: 12px 18px; border-radius: 12px;
+            background: #ffffff; border: 1px solid var(--border-color); border-right: 5px solid var(--primary);
+            color: var(--text-main); font-weight: 700; box-shadow: var(--shadow-lg); display: none; z-index: 3500; text-align: center;
+        }
+
+        /* تعديلات إضافية للشاشات الصغيرة جداً */
+        @media (max-width: 600px) {
+            .navbar { padding: 10px 15px; justify-content: center; }
+            .brand-logo { width: 100%; justify-content: center; margin-bottom: 5px; }
+            .nav-buttons { width: 100%; justify-content: center; }
+            .toolbar { padding: 12px; flex-direction: column; align-items: stretch; }
+            .toolbar > div { width: 100%; justify-content: space-between; }
+            .toolbar input[type="date"] { flex-grow: 1; }
+            .grid-tasks { grid-template-columns: 1fr; }
+        }
+
+        .login-error {
+            background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+            border-radius: 10px; padding: 10px 12px; font-size: 0.85rem; font-weight: 700;
+            margin-bottom: 12px; text-align: center; display: none;
+        }
+        .category-header {
+            grid-column: 1 / -1; font-weight: 800; font-size: 1.05rem; color: var(--primary);
+            margin: 14px 0 -2px; padding-bottom: 8px; border-bottom: 2px solid var(--border-color);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .category-header:first-child { margin-top: 0; }
+        .btn-cancel-permission { background-color: #94a3b8 !important; cursor: not-allowed !important; opacity: 0.7; }
+        .live-dot {
+            display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success);
+            animation: pulseDot 1.5s infinite;
+        }
+        @keyframes pulseDot { 0%{opacity:1;} 50%{opacity:.3;} 100%{opacity:1;} }
+    </style>
+</head>
+<body>
+
+<!-- شاشة تسجيل الدخول -->
+<div class="login-overlay" id="loginScreen">
+    <div class="login-card">
+        <div class="login-logo">
+            <span class="logo-ر">ر</span><span class="logo-و">و</span><span class="logo-ا">ا</span><span class="logo-ف">في</span>
+        </div>
+        <p>تسجيل الدخول إلى لوحة التحكم</p>
+
+        <div class="login-error" id="loginError"></div>
+
+        <div class="form-group">
+            <label>اسم المستخدم أو ID</label>
+            <input type="text" id="loginUser" placeholder="أدخل رقم/اسم الموظف" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>كلمة المرور (Password)</label>
+            <input type="password" id="loginPass" placeholder="أدخل كلمة المرور" autocomplete="off">
+        </div>
+        <button class="btn-login" id="loginBtn" onclick="handleLogin()">تسجيل الدخول</button>
+    </div>
+</div>
+
+<!-- التطبيق الرئيسي -->
+<div id="mainApp">
+    <div class="navbar">
+        <div class="brand-logo">
+            <div class="brand-name">
+                <span class="logo-ر">ر</span><span class="logo-و">و</span><span class="logo-ا">ا</span><span class="logo-ف">في</span>
+            </div>
+            <span class="brand-sub">للسفر والسياحة</span>
+        </div>
+        <div class="nav-buttons">
+            <span style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:5px;">
+                <span class="live-dot"></span> تحديث لحظي
+            </span>
+            <button class="btn-supplier" onclick="openSupplierModal()">💰 الأرصدة</button>
+            <button id="auditLogButton" class="btn-link" style="display:none;" onclick="openAuditLog()">🔗 السجل</button>
+            <span id="currentUserName" style="font-weight:700; color:var(--primary);"></span>
+            <button class="btn-reset" onclick="handleLogout()" style="background-color: var(--danger);">خروج 🚪</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="toolbar">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">التاريخ:</label>
+                <input type="date" id="taskDate" onchange="onFilterChangeAndReload()">
+                <button class="btn-reset" onclick="clearDateFilter()" title="إلغاء فلترة التاريخ">إلغاء ❌</button>
+            </div>
+            <input type="text" id="searchInput" placeholder="🔍 بحث عن مهمة..." oninput="onFilterChange()">
+            <select id="statusFilter" onchange="onFilterChange()" style="width: auto; min-width: 140px;">
+                <option value="all">كل المهام</option>
+                <option value="active">جاري العمل</option>
+                <option value="ended">منتهية</option>
+                <option value="idle">متاحة</option>
+            </select>
+        </div>
+
+        <div id="syncNotice" role="status" style="display:none; padding:12px; margin-bottom:12px; background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; border-radius:10px;"></div>
+        <div class="grid-tasks" id="tasksGrid"></div>
+
+    </div>
+
+    <!-- Modal نافذة بدء المهمة واختيار التاريخ -->
+    <div class="modal-overlay" id="startTaskModal">
+        <div class="modal modal-sm">
+            <div class="modal-header" style="background: #eff6ff;">
+                <h2 style="color: var(--primary);">🚀 بدء المهمة وتحديد التاريخ</h2>
+                <button class="modal-close" onclick="closeStartTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:15px; font-size:0.85rem; border: 1px solid var(--border-color);">
+                    المهمة: <strong id="modalStartTaskTitle" style="color:var(--primary);">---</strong>
+                </div>
+
+                <div class="form-group">
+                    <label>اختر الموظف:</label>
+                    <select id="modalStartEmpSelect" style="width:100%; padding:11px; background:#fff; border-radius:10px; border:1px solid var(--border-color);">
+                        <option value="">-- اختر الموظف --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>تاريخ البدء:</label>
+                    <input type="date" id="modalStartDateInput">
+                </div>
+
+                <button class="btn-start" style="width: 100%; padding: 12px; margin-top: 5px;" onclick="confirmStartTask()">تأكيد البدء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal نافذة إنهاء المهمة -->
+    <div class="modal-overlay" id="endTaskModal">
+        <div class="modal modal-sm">
+            <div class="modal-header" style="background: #fef2f2;">
+                <h2 style="color: var(--danger);">🛑 إنهاء المهمة وتسجيل الرصيد</h2>
+                <button class="modal-close" onclick="closeEndTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:15px; font-size:0.85rem; border: 1px solid var(--border-color); display:flex; flex-direction:column; gap:5px;">
+                    <div>المهمة: <strong id="modalTaskTitle" style="color:var(--primary);">---</strong></div>
+                    <div>الموظف: <strong id="modalEmpName">---</strong></div>
+                    <div>رصيد المورد: <strong id="modalCurrentSupplierBalance" style="color:var(--gold);">0 ج.م</strong></div>
+                </div>
+
+                <div class="form-group">
+                    <label>رصيد المورد الحالي:</label>
+                    <input type="number" id="dailyBalanceInput" placeholder="أدخل المبلغ..." min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="taskScreenInput">إرفاق صورة (اختياري)</label>
+                    <input type="file" id="taskScreenInput" accept="image/jpeg,image/png,image/gif,image/webp" onchange="previewTaskScreen()">
+                    <small style="display:block;color:var(--text-muted);">JPG، PNG، GIF أو WebP — بحد أقصى 3 ميجابايت</small>
+                    <div id="taskScreenPreview" style="display:none;margin-top:8px;">
+                        <img id="taskScreenImage" alt="معاينة الصورة المرفقة" style="max-width:100%;max-height:160px;border-radius:8px;">
+                        <button type="button" class="btn-reset" onclick="clearTaskScreen()">إزالة الصورة</button>
+                    </div>
+                </div>
+                <button class="btn-end" style="width: 100%; padding: 12px; margin-top: 5px;" onclick="confirmEndTask()">تأكيد الإنهاء وتسجيل الرصيد</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal نافذة إدارة رصيد الموردين -->
+    <div class="modal-overlay" id="supplierModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>💰 أرصدة الموردين</h2>
+                <button class="modal-close" onclick="closeSupplierModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <label for="supplierBalanceDate" style="display:block;margin-bottom:6px;">تاريخ الحركة</label>
+                    <input type="date" id="supplierBalanceDate" onchange="loadSupplierDateBalances()" style="width:100%;padding:10px;margin-bottom:12px;">
+                    <div id="supplierBalanceMessage" role="status" style="margin-bottom:8px;"></div>
+                    <label for="supplierSearchInput" style="display:block;margin-bottom:6px;">بحث باسم المهمة أو المورد</label>
+                    <input type="search" id="supplierSearchInput" class="supplier-search-box" placeholder="اكتب الاسم..." oninput="renderSupplierTable();queueAuditFilter('الأرصدة',this.value)" style="width:100%;">
+                    <table class="supplier-table">
+                        <thead>
+                            <tr>
+                                <th>اسم المهمة</th>
+                                <th>رصيد المورد</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplierTableBody">
+                            <!-- ديناميكي -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="auditModal">
+ <div class="modal" style="max-width:1200px;">
+  <div class="modal-header"><h2>سجل النشاط — Admin</h2><button class="modal-close" onclick="document.getElementById('auditModal').classList.remove('active')">×</button></div>
+  <div class="modal-body">
+   <div class="toolbar">
+    <input id="auditDate" type="date" aria-label="تاريخ النشاط">
+    <input id="auditUser" placeholder="اسم المستخدم أو ID" aria-label="المستخدم">
+    <input id="auditTask" placeholder="اسم المهمة" aria-label="المهمة">
+    <button class="btn-start" onclick="loadAuditLog(1)">بحث / تحديث</button>
+   </div>
+   <p id="auditMessage" role="status"></p>
+   <div class="table-responsive"><table class="supplier-table"><thead><tr id="auditLogHead"></tr></thead><tbody id="auditLogBody"></tbody></table></div>
+   <div class="pagination"><button id="auditPrev" onclick="loadAuditLog(auditPage-1)">السابق</button><span id="auditPageLabel"></span><button id="auditNext" onclick="loadAuditLog(auditPage+1)">التالي</button></div>
+  </div>
+ </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+    /* =====================================================================
+       إعداد الاتصال بجوجل شيت (Google Apps Script Web App)
+       بعد نشر السكريبت كـ Web App، الصق رابط النشر هنا بين علامتي التنصيص
+    ===================================================================== */
+    const API_URL = "https://script.google.com/macros/s/AKfycbwoQAZjxnb_74Jhgcm2NOlLRt8AHluGwlv189BgfayOpp6MoBTjy2iI9XhX48yW5le54A/exec";
+
+    const REFRESH_INTERVAL_MS = 8000; // كل كام ثانية يحصل تحديث لحظي للحالة
+
+    async function apiCall(action, params) {
+        params = params || {};
+        if (action !== 'login') params = { ...params, token: localStorage.getItem('currentSessionToken') || '' };
+        const qs = Object.keys(params)
+            .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] == null ? '' : params[k]))
+            .join('&');
+        const url = API_URL + '?action=' + encodeURIComponent(action) + (qs ? '&' + qs : '');
+        const res = ['login','start','end','update','cancel','activity','logout'].includes(action)
+            ? await fetch(API_URL, { method: 'POST', body: new URLSearchParams({ action, ...params }), cache: 'no-store' })
+            : await fetch(url + '&_t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('فشل الاتصال بالسيرفر (HTTP ' + res.status + ')');
+        const body = await res.text();
+        try {
+            const result = JSON.parse(body);
+            if (result.auditWarning) showToast(result.auditWarning, true);
+            return result;
+        }
+        catch { throw new Error('السيرفر رجّع صفحة بدل بيانات. راجع رابط نشر Google وصلاحية الوصول والكود المنشور.'); }
+    }
+
+    /* ================= تسجيل الدخول ================= */
+    window.onload = function() {
+        const savedUser = localStorage.getItem('currentEmployeeId');
+        if (savedUser && localStorage.getItem('currentSessionToken')) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            initApp();
+        }
+    };
+
+    function showLoginError(msg) {
+        const el = document.getElementById('loginError');
+        el.innerText = msg;
+        el.style.display = 'block';
+    }
+    function hideLoginError() {
+        document.getElementById('loginError').style.display = 'none';
+    }
+
+    async function handleLogin() {
+        hideLoginError();
+        const user = document.getElementById('loginUser').value.trim();
+        const pass = document.getElementById('loginPass').value.trim();
+
+        if (!user || !pass) {
+            showLoginError('برجاء إدخال اسم المستخدم وكلمة المرور');
+            return;
+        }
+
+        if (!API_URL || API_URL.indexOf('PASTE_YOUR') !== -1) {
+            showLoginError('لم يتم ربط الموقع بجوجل شيت بعد (API_URL)');
+            return;
+        }
+
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        btn.innerText = 'جاري التحقق...';
+
+        try {
+            const result = await apiCall('login', { id: user, pass: pass });
+            if (result.success) {
+                localStorage.setItem('currentEmployeeId', result.employeeId);
+                localStorage.setItem('currentSessionToken', result.token || '');
+                localStorage.setItem('currentEmployeeName', result.employeeName || result.employeeId);
+                localStorage.setItem('currentEmployeePermission', result.permission);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                await initApp();
+                showToast('مرحباً بك ' + (result.employeeName || result.employeeId) + ' في نظام روافي!');
+            } else {
+                showLoginError(result.message || 'اسم المستخدم أو كلمة المرور غير صحيحة!');
+            }
+        } catch (err) {
+            showLoginError('تعذر الاتصال بالسيرفر. تأكد من الإنترنت وحاول مرة أخرى.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'تسجيل الدخول';
+        }
+    }
+
+    // السماح بالضغط على Enter لتسجيل الدخول
+    document.addEventListener('DOMContentLoaded', function() {
+        ['loginUser', 'loginPass'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+        });
+    });
+
+    async function handleLogout() {
+        try { await apiCall('logout', {}); } catch {}
+        document.getElementById('auditModal').classList.remove('active');
+        document.getElementById('auditLogBody').innerHTML = '';
+        auditRequest++;
+        localStorage.removeItem('currentEmployeeId');
+        localStorage.removeItem('currentSessionToken');
+        localStorage.removeItem('currentEmployeeName');
+        stateRequestVersion++;
+        localStorage.removeItem('currentEmployeePermission');
+        stopLivePolling();
+        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPass').value = '';
+        hideLoginError();
+    }
+
+    function getCurrentEmployee() { return localStorage.getItem('currentEmployeeId') || ''; }
+    function getCurrentPermission() { return localStorage.getItem('currentEmployeePermission') || 'General'; }
+    function canManage() {
+        const p = getCurrentPermission();
+        return p === 'Manager' || p === 'Admin';
+    }
+
+    /* ================= تحميل بيانات الموظفين والمهام من جوجل شيت ================= */
+    function escapeHTML(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function employeeName(id) {
+        const emp = employees.find(e => e.id === String(id));
+        return emp ? emp.name : (id || '---');
+    }
+    function updateCurrentUser() {
+        const name = employeeName(getCurrentEmployee());
+        document.getElementById('currentUserName').textContent = name;
+        document.getElementById('auditLogButton').style.display = getCurrentPermission() === 'Admin' ? 'inline-flex' : 'none';
+    }
+    function localToday() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    const collapsedCategories = new Set();
+    let stateRequestVersion = 0;
+    let loadingState = false;
+    let needsBackendUpdate = false;
+    let draggingTask = null;
+    function layoutKey() { return 'rwafi_task_layout_' + getCurrentEmployee(); }
+    function readTaskLayout() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(layoutKey()));
+            return { pins: Array.isArray(saved?.pins) ? saved.pins : [], order: Array.isArray(saved?.order) ? saved.order : [] };
+        } catch { return { pins: [], order: [] }; }
+    }
+    function saveTaskLayout(layout) {
+        try { localStorage.setItem(layoutKey(), JSON.stringify(layout)); return true; }
+        catch { showToast('تعذر حفظ ترتيب المهام على هذا المتصفح', true); return false; }
+    }
+    function taskPlacementGroup(item, layout) {
+        return layout.pins.includes(item.taskName) ? 0 : item.taskState?.status === 'ended' ? 2 : 1;
+    }
+    function moveTask(sourceName, targetName) {
+        const layout = readTaskLayout();
+        const ordered = getFilteredTasks();
+        const source = ordered.find(t => t.taskName === sourceName);
+        const target = ordered.find(t => t.taskName === targetName);
+        if (!source || !target || sourceName === targetName) return;
+        if (source.category !== target.category || taskPlacementGroup(source, layout) !== taskPlacementGroup(target, layout)) {
+            showToast('حرّك المهمة داخل نفس التصنيف ومجموعة التثبيت؛ المهام المنتهية تظل أسفل غير المثبتة.');
+            return;
+        }
+        const names = ordered.map(t => t.taskName);
+        const from = names.indexOf(sourceName), to = names.indexOf(targetName);
+        names.splice(from, 1);
+        names.splice(to, 0, sourceName);
+        // Replace only visible slots, preserving the order of tasks hidden by filters.
+        const visible = new Set(names);
+        const existing = layout.order.filter(n => tasks.some(t => t.name === n));
+        for (const name of names) if (!existing.includes(name)) existing.push(name);
+        let i = 0;
+        layout.order = existing.map(n => visible.has(n) ? names[i++] : n);
+        if (saveTaskLayout(layout)) { recordActivity('reorder', sourceName, 'إلى موضع ' + targetName); renderGrid(); }
+    }
+    function addTaskLayoutControls(card, item) {
+        card.dataset.taskName = item.taskName;
+        const layout = readTaskLayout();
+        const bar = document.createElement('div');
+        bar.className = 'card-tools';
+        const pin = document.createElement('button');
+        const pinned = layout.pins.includes(item.taskName);
+        pin.textContent = pinned ? '📌 إلغاء التثبيت' : '📌 تثبيت';
+        pin.className = pinned ? 'pin-active' : '';
+        pin.setAttribute('aria-pressed', String(pinned));
+        pin.onclick = () => {
+            const updated = readTaskLayout();
+            updated.pins = pinned ? updated.pins.filter(n => n !== item.taskName) : [...updated.pins, item.taskName];
+            if (saveTaskLayout(updated)) { recordActivity(pinned ? 'unpin' : 'pin', item.taskName); renderGrid(); }
+        };
+        const handle = document.createElement('button');
+        handle.className = 'drag-handle';
+        handle.textContent = '⠿ تحريك';
+        handle.title = 'اسحب إلى مهمة أخرى؛ أو استخدم مفاتيح الأسهم للتحريك';
+        handle.setAttribute('aria-label', 'تحريك ' + item.taskName + ' بالسحب أو مفاتيح الأسهم');
+        handle.onkeydown = e => {
+            if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) return;
+            e.preventDefault();
+            const current = readTaskLayout();
+            const group = getFilteredTasks().filter(t => t.category === item.category && taskPlacementGroup(t,current) === taskPlacementGroup(item,current));
+            const index = group.findIndex(t => t.taskName === item.taskName);
+            const delta = ['ArrowLeft','ArrowDown'].includes(e.key) ? 1 : -1;
+            if (group[index + delta]) {
+                moveTask(item.taskName, group[index + delta].taskName);
+                Array.from(document.querySelectorAll('.task-card')).find(el => el.dataset.taskName === item.taskName)?.querySelector('.drag-handle')?.focus();
+            }
+        };
+        handle.onpointerdown = e => {
+            if (e.button !== 0) return;
+            draggingTask = item.taskName;
+            let target = null;
+            card.classList.add('dragging');
+            handle.setPointerCapture(e.pointerId);
+            handle.onpointermove = move => {
+                document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+                target = document.elementFromPoint(move.clientX, move.clientY)?.closest('.task-card');
+                if (target && target !== card) target.classList.add('drop-target');
+                if (move.clientY > window.innerHeight - 65) window.scrollBy(0, 18);
+                if (move.clientY < 65) window.scrollBy(0, -18);
+            };
+            const finish = cancelled => {
+                const destination = target?.dataset.taskName;
+                draggingTask = null;
+                card.classList.remove('dragging');
+                document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+                handle.onpointermove = handle.onpointerup = handle.onpointercancel = null;
+                if (!cancelled && destination) moveTask(item.taskName, destination);
+            };
+            handle.onpointerup = () => finish(false);
+            handle.onpointercancel = () => finish(true);
+        };
+        bar.append(pin, handle);
+        card.prepend(bar);
+    }
+    let employees = [];
+    let tasks = []; // [{name, category}]
+    let taskStates = {}; // { taskName: {status:'in_progress'|'ended', start, end} }
+
+    const categoryPages = new Map();
+    const itemsPerPage = 8;
+    let pendingStartTaskIndex = null;
+    let pendingEndTaskIndex = null;
+    let currentSelectedDateForAction = '';
+    let livePollTimer = null;
+
+    async function initApp() {
+        const dateInput = document.getElementById('taskDate');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = localToday();
+        }
+        await loadInitialData();
+        startLivePolling();
+    }
+
+    function currentDate() {
+        const d = document.getElementById('taskDate').value;
+        return d || localToday();
+    }
+
+    async function loadInitialData() {
+        const date = currentDate();
+        const version = ++stateRequestVersion;
+        loadingState = true;
+        document.getElementById('tasksGrid').textContent = 'جاري تحميل حالة المهام ليوم ' + date + '...';
+        try {
+            const result = await apiCall('init', { date });
+            if (version !== stateRequestVersion || date !== currentDate() || !getCurrentEmployee()) return;
+            if (!result.success) throw new Error(result.message || 'تعذر تحميل البيانات');
+            employees = (result.employees || []).map(e => typeof e === 'string' ? {id:e, name:e} : e);
+            tasks = result.tasks || [];
+            taskStates = result.state || {};
+            supplierBalances = result.balances || {};
+            updateCurrentUser();
+            renderGrid();
+        } catch (err) {
+            if (version !== stateRequestVersion) return;
+            taskStates = {};
+            document.getElementById('tasksGrid').textContent = 'تعذر تحميل حالة هذا اليوم. أعد اختيار التاريخ للمحاولة.';
+            showToast(err.message || 'تعذر الاتصال بجوجل شيت', true);
+        } finally { if (version === stateRequestVersion) loadingState = false; }
+    }
+
+    async function refreshStateOnly() {
+        if (draggingTask || needsBackendUpdate || loadingState || document.querySelector('.modal-overlay.active') || document.activeElement?.tagName === 'SELECT') return;
+        const date = currentDate();
+        const version = ++stateRequestVersion;
+        try {
+            const result = await apiCall('state', { date });
+            if (draggingTask || version !== stateRequestVersion || date !== currentDate() || !getCurrentEmployee()) return;
+            if (result.success && (JSON.stringify(taskStates) !== JSON.stringify(result.state || {}) || JSON.stringify(supplierBalances) !== JSON.stringify(result.balances || {}))) {
+                taskStates = result.state || {};
+                supplierBalances = result.balances || {};
+                renderGrid();
+            }
+        } catch (err) { /* Keep the last successfully loaded state. */ }
+    }
+
+    function applyActionState(result, date) {
+        stateRequestVersion++;
+        document.getElementById('taskDate').value = date;
+        document.getElementById('statusFilter').value = 'all';
+        taskStates = result.state || {};
+        if (result.balances) supplierBalances = result.balances;
+        renderGrid();
+    }
+
+    function applyConfirmedTask(result, date, taskName, expectedState) {
+        const confirmed = result.state && result.state[taskName];
+        const synchronized = confirmed && confirmed.status === expectedState.status;
+        needsBackendUpdate = !synchronized;
+        const notice = document.getElementById('syncNotice');
+        notice.style.display = synchronized ? 'none' : 'block';
+        notice.textContent = synchronized ? '' : 'السيرفر أكد حفظ العملية لكنه لم يرجع الحالة الجديدة. تم تحديث البطاقة بناءً على نجاح الحفظ وإيقاف التحديث الدوري مؤقتًا. حدّث نشر كود Google المرفق لضمان مزامنة الحالة وسجل الأيام، ثم أعد تحميل الصفحة.';
+        const state = result.state || (date === currentDate() ? taskStates : {});
+        applyActionState({ state: { ...state, [taskName]: synchronized ? confirmed : expectedState }, balances: result.balances }, date);
+    }
+
+    function startLivePolling() {
+        stopLivePolling();
+        livePollTimer = setInterval(refreshStateOnly, REFRESH_INTERVAL_MS);
+    }
+    function stopLivePolling() {
+        if (livePollTimer) { clearInterval(livePollTimer); livePollTimer = null; }
+    }
+
+    /* ================= أرصدة الموردين (تبقى محلية كما هي بدون تغيير) ================= */
+    let supplierBalances = {};
+    function getTaskBalanceForDate(taskKey, targetDate) {
+        return supplierBalances[taskKey] ?? null;
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.style.borderColor = isError ? 'var(--danger)' : 'var(--primary)';
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function clearDateFilter() {
+        document.getElementById('taskDate').value = localToday();
+        onFilterChangeAndReload();
+    }
+
+    async function onFilterChangeAndReload() {
+        categoryPages.clear();
+        await loadInitialData();
+    }
+
+    function onFilterChange() {
+        queueAuditFilter('المهام', document.getElementById('searchInput').value, document.getElementById('statusFilter').value);
+        categoryPages.clear();
+        renderGrid();
+    }
+
+    function getFilteredTasks() {
+        const layout = readTaskLayout();
+        const search = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+        const status = document.getElementById('statusFilter') ? document.getElementById('statusFilter').value : 'all';
+        const selectedDate = currentDate();
+
+        return tasks
+            .map((t, index) => {
+                const state = taskStates[t.name] || null;
+                const balance = getTaskBalanceForDate(t.name, selectedDate);
+                return { index, taskName: t.name, category: t.category || 'عام', repetition: t.repetition === true, taskState: state, balance, selectedDate };
+            })
+            .filter(item => {
+                const matchesSearch = item.taskName.toLowerCase().includes(search);
+
+                const isEnded = item.taskState && item.taskState.status === 'ended';
+                const isActive = item.taskState && item.taskState.status === 'in_progress';
+                const isIdle = !item.taskState;
+
+                const matchesStatus = status === 'all' ||
+                    (status === 'active' && isActive) ||
+                    (status === 'ended' && isEnded) ||
+                    (status === 'idle' && isIdle);
+
+                return matchesSearch && matchesStatus;
+            })
+            .sort((a, b) => {
+                const categoryOrder = a.category.localeCompare(b.category, 'ar');
+                if (categoryOrder) return categoryOrder;
+                const groupOrder = taskPlacementGroup(a, layout) - taskPlacementGroup(b, layout);
+                if (groupOrder) return groupOrder;
+                const rankA = layout.order.indexOf(a.taskName), rankB = layout.order.indexOf(b.taskName);
+                if (rankA !== -1 || rankB !== -1) return (rankA === -1 ? Infinity : rankA) - (rankB === -1 ? Infinity : rankB);
+                const priority = item => item.taskState?.status === 'ended' ? 2 : item.taskState?.status === 'in_progress' ? 0 : 1;
+                return priority(a) - priority(b) || a.index - b.index;
+            });
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('tasksGrid');
+        if (!grid) return;
+        const selections = new Map(Array.from(grid.querySelectorAll('select')).map(el => [el.id, el.value]));
+        grid.innerHTML = '';
+        const filtered = getFilteredTasks();
+
+        const groups = new Map();
+        filtered.forEach(item => {
+            if (!groups.has(item.category)) groups.set(item.category, []);
+            groups.get(item.category).push(item);
+        });
+        if (!filtered.length) grid.textContent = 'لا توجد مهام مطابقة للفلاتر الحالية.';
+        groups.forEach((categoryItems, category) => {
+                const totalPages = Math.ceil(categoryItems.length / itemsPerPage);
+                const page = Math.min(categoryPages.get(category) || 1, totalPages);
+                categoryPages.set(category, page);
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                const toggle = document.createElement('button');
+                toggle.className = 'category-toggle';
+                toggle.setAttribute('aria-expanded', String(!collapsedCategories.has(category)));
+                toggle.textContent = (collapsedCategories.has(category) ? '◀ ' : '▼ ') + category + ' (' + categoryItems.length + ')';
+                toggle.onclick = () => {
+                    if (collapsedCategories.has(category)) collapsedCategories.delete(category);
+                    else collapsedCategories.add(category);
+                    recordActivity(collapsedCategories.has(category) ? 'collapse' : 'expand', '', category);
+                    renderGrid();
+                };
+                header.appendChild(toggle);
+                grid.appendChild(header);
+                if (collapsedCategories.has(category)) return;
+                const pageItems = categoryItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+                pageItems.forEach(item => {
+            const card = document.createElement('div');
+
+            let empOptions = '<option value="">-- الموظف --</option>';
+            employees.forEach(emp => {
+                empOptions += `<option value="${escapeHTML(emp.id)}">${escapeHTML(emp.name)}</option>`;
+            });
+
+            const balanceHTML = `
+                <div class="supplier-balance-box">
+                    <span class="supplier-balance-label">💼 رصيد المورد:</span>
+                    <span class="supplier-balance-amount">${item.balance === null ? 'لا توجد حركة' : item.balance.toLocaleString() + ' ج.م'}</span>
+                </div>
+            `;
+
+            const safeKey = item.taskName.replace(/'/g, "\\'");
+
+            if (item.taskState && item.taskState.status === 'ended') {
+                card.className = 'task-card is-ended';
+                const resetBtn = item.repetition
+                    ? `<select id="emp_${item.index}">${empOptions}</select><button class="btn-start" onclick="openEndTaskModal(${item.index}, '${safeKey}', '${item.selectedDate}', true)">تحديث 🔄</button>`
+                    : canManage()
+                    ? `<button class="btn-reset" onclick="resetTaskForDate('${safeKey}', '${item.selectedDate}')">إعادة فتح 🔄</button>`
+                    : `<button class="btn-reset btn-cancel-permission" disabled title="إعادة الفتح متاحة للمدير فقط">إعادة فتح 🔒</button>`;
+                card.innerHTML = `
+                    <div class="task-header">
+                        <span>${escapeHTML(item.taskName)}</span>
+                        <span class="badge-ended">منتهية</span>
+                    </div>
+                    ${balanceHTML}
+                    <div style="font-size: 0.8rem; color: var(--text-muted); display:flex; flex-direction:column; gap:3px; margin: 6px 0;">
+                        <div>بدأ: <strong style="color:var(--text-main);">${escapeHTML(employeeName(item.taskState.start))}</strong></div>
+                        <div>أنهى: <strong style="color:var(--text-main);">${escapeHTML(employeeName(item.taskState.end))}</strong></div>
+                    </div>
+                    <div class="task-actions" style="justify-content: flex-end; margin-top:8px;">
+                        ${resetBtn}
+                    </div>
+                `;
+            } else if (item.taskState && item.taskState.status === 'in_progress') {
+                card.className = 'task-card in-progress';
+                card.innerHTML = `
+                    <div class="task-header">
+                        <span>${escapeHTML(item.taskName)}</span>
+                        <span class="badge-active">جاري العمل</span>
+                    </div>
+                    ${balanceHTML}
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0;">
+                        <div>بدأ: <strong style="color:var(--text-main);">${escapeHTML(employeeName(item.taskState.start))}</strong></div>
+                    </div>
+                    <div class="task-actions">
+                        <select id="emp_${item.index}">${empOptions}</select>
+                        <button class="btn-end" onclick="openEndTaskModal(${item.index}, '${safeKey}', '${item.selectedDate}')">إنهاء</button>
+                    </div>
+                `;
+            } else {
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <div class="task-header">
+                        <span>${escapeHTML(item.taskName)}</span>
+                        <small style="color:var(--text-muted); font-size:0.8rem;">متاحة</small>
+                    </div>
+                    ${balanceHTML}
+                    <div class="task-actions">
+                        <select id="emp_${item.index}">${empOptions}</select>
+                        <button class="btn-start" onclick="openStartTaskModal(${item.index}, '${safeKey}', '${item.selectedDate}')">بدء</button>
+                    </div>
+                `;
+            }
+
+            addTaskLayoutControls(card, item);
+            grid.appendChild(card);
+                });
+                if (totalPages > 1) {
+                    const pager = document.createElement('nav');
+                    pager.className = 'pagination';
+                    pager.style.cssText = 'grid-column:1/-1;margin:8px 0 22px;';
+                    pager.setAttribute('aria-label', 'صفحات ' + category);
+                    const previous = document.createElement('button');
+                    previous.textContent = 'السابق';
+                    previous.disabled = page === 1;
+                    previous.onclick = () => changeCategoryPage(category, -1);
+                    const label = document.createElement('span');
+                    label.textContent = `صفحة ${page} من ${totalPages} — ${categoryItems.length} مهمة`;
+                    const next = document.createElement('button');
+                    next.textContent = 'التالي';
+                    next.disabled = page === totalPages;
+                    next.onclick = () => changeCategoryPage(category, 1);
+                    pager.append(previous, label, next);
+                    grid.appendChild(pager);
+                }
+        });
+
+        grid.querySelectorAll('select').forEach(el => { if (selections.has(el.id)) el.value = selections.get(el.id); });
+    }
+
+    function changeCategoryPage(category, direction) {
+        recordActivity('filter', '', 'صفحات التصنيف: ' + category + '؛ الاتجاه: ' + direction);
+        categoryPages.set(category, Math.max(1, (categoryPages.get(category) || 1) + direction));
+        renderGrid();
+    }
+
+    /* ================= بدء المهمة ================= */
+    function openStartTaskModal(index, taskName, dateStr) {
+        const empVal = document.getElementById('emp_' + index).value;
+        if (!empVal) return showToast('برجاء اختيار الموظف أولاً', true);
+
+        pendingStartTaskIndex = index;
+        currentSelectedDateForAction = dateStr;
+        document.getElementById('modalStartTaskTitle').innerText = `${taskName} (${dateStr})`;
+
+        let empSelect = document.getElementById('modalStartEmpSelect');
+        empSelect.innerHTML = '<option value="">-- اختر الموظف --</option>';
+        employees.forEach(emp => {
+            empSelect.innerHTML += `<option value="${escapeHTML(emp.id)}">${escapeHTML(emp.name)}</option>`;
+        });
+        empSelect.value = empVal;
+
+        document.getElementById('modalStartDateInput').value = dateStr;
+        document.getElementById('startTaskModal').classList.add('active');
+    }
+
+    function closeStartTaskModal() {
+        document.getElementById('startTaskModal').classList.remove('active');
+        pendingStartTaskIndex = null;
+    }
+
+    async function confirmStartTask() {
+        if (pendingStartTaskIndex === null) return;
+
+        const index = pendingStartTaskIndex;
+        const empVal = document.getElementById('modalStartEmpSelect').value;
+        const dateVal = document.getElementById('modalStartDateInput').value;
+
+        if (!empVal) return showToast('برجاء اختيار الموظف', true);
+        if (!dateVal) return showToast('برجاء تحديد تاريخ البدء', true);
+
+        const taskName = tasks[index].name;
+        const btn = document.querySelector('#startTaskModal .btn-start');
+        if (btn) { btn.disabled = true; btn.innerText = 'جاري حفظ البدء...'; }
+
+        try {
+            const result = await apiCall('start', { date: dateVal, task: taskName, employee: empVal });
+            if (result.success) {
+                closeStartTaskModal();
+                applyConfirmedTask(result, dateVal, taskName, { status: 'in_progress', start: empVal });
+                showToast(`تم بدء "${taskName}" بنجاح`);
+            } else {
+                showToast(result.message || 'حدث خطأ أثناء البدء', true);
+            }
+        } catch (err) {
+            showToast('تعذر الاتصال بجوجل شيت', true);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerText = 'تأكيد البدء'; }
+        }
+    }
+
+    /* ================= إنهاء المهمة ================= */
+    function openEndTaskModal(index, taskName, dateStr, isUpdate = false) {
+        clearTaskScreen();
+        const empVal = document.getElementById('emp_' + index).value;
+        if (!empVal) return showToast('برجاء اختيار الموظف', true);
+
+        pendingEndTaskIndex = index;
+        currentSelectedDateForAction = dateStr;
+        const currentSupplierBal = getTaskBalanceForDate(taskName, dateStr);
+        const state = taskStates[taskName] || {};
+
+        document.getElementById('modalTaskTitle').innerText = `${taskName} (${dateStr})`;
+        document.getElementById('modalEmpName').innerText = employeeName(empVal);
+        document.getElementById('endTaskModal').dataset.employeeId = empVal;
+        document.getElementById('endTaskModal').dataset.isUpdate = String(isUpdate);
+        document.querySelector('#endTaskModal h2').textContent = isUpdate ? 'تحديث رصيد المهمة' : 'إنهاء المهمة وتسجيل الرصيد';
+        document.querySelector('#endTaskModal .btn-end').textContent = isUpdate ? 'تأكيد التحديث' : 'تأكيد الإنهاء وتسجيل الرصيد';
+        document.getElementById('modalCurrentSupplierBalance').innerText = currentSupplierBal === null ? 'لا توجد حركة' : `${currentSupplierBal.toLocaleString()} ج.م`;
+        document.getElementById('dailyBalanceInput').value = '';
+
+        // نحتفظ باسم من بدأ لإرساله للسيرفر مع الإنهاء
+        document.getElementById('endTaskModal').dataset.startedBy = isUpdate ? empVal : state.start || '';
+        document.getElementById('endTaskModal').dataset.taskName = taskName;
+
+        document.getElementById('endTaskModal').classList.add('active');
+    }
+
+    function closeEndTaskModal() {
+        document.getElementById('endTaskModal').classList.remove('active');
+        pendingEndTaskIndex = null;
+    }
+
+    let taskScreenPreviewUrl = '';
+    function clearTaskScreen() {
+        if (taskScreenPreviewUrl) URL.revokeObjectURL(taskScreenPreviewUrl);
+        taskScreenPreviewUrl = '';
+        document.getElementById('taskScreenInput').value = '';
+        document.getElementById('taskScreenImage').removeAttribute('src');
+        document.getElementById('taskScreenPreview').style.display = 'none';
+    }
+    function validateTaskScreen(file) {
+        if (!file) return;
+        if (!['image/jpeg','image/png','image/gif','image/webp'].includes(file.type)) throw new Error('اختر صورة JPG أو PNG أو GIF أو WebP فقط');
+        if (!file.size || file.size > 3 * 1024 * 1024) throw new Error('اختر صورة بحجم لا يتجاوز 3 ميجابايت');
+    }
+    function previewTaskScreen() {
+        const file = document.getElementById('taskScreenInput').files[0];
+        try {
+            validateTaskScreen(file);
+            if (!file) return clearTaskScreen();
+            if (taskScreenPreviewUrl) URL.revokeObjectURL(taskScreenPreviewUrl);
+            taskScreenPreviewUrl = URL.createObjectURL(file);
+            document.getElementById('taskScreenImage').src = taskScreenPreviewUrl;
+            document.getElementById('taskScreenPreview').style.display = 'block';
+        } catch (err) { clearTaskScreen(); showToast(err.message, true); }
+    }
+    function readTaskScreen(file) {
+        validateTaskScreen(file);
+        if (!file) return Promise.resolve('');
+        return new Promise((resolve,reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('تعذر قراءة الصورة المختارة'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function confirmEndTask() {
+        if (pendingEndTaskIndex === null) return;
+
+        const index = pendingEndTaskIndex;
+        const dateStr = currentSelectedDateForAction;
+        const empVal = document.getElementById('endTaskModal').dataset.employeeId;
+        const dailyBalanceVal = parseFloat(document.getElementById('dailyBalanceInput').value);
+        const modal = document.getElementById('endTaskModal');
+        const taskName = modal.dataset.taskName;
+        const startedBy = modal.dataset.startedBy;
+        const isUpdate = modal.dataset.isUpdate === 'true';
+
+        if (!Number.isFinite(dailyBalanceVal) || dailyBalanceVal < 0) {
+            return showToast('برجاء إدخال مبلغ صحيح', true);
+        }
+
+        const btn = document.querySelector('#endTaskModal .btn-end');
+        if (btn?.disabled) return;
+        if (btn) { btn.disabled = true; btn.innerText = 'جاري حفظ الإنهاء...'; }
+        let saved = false;
+
+        try {
+            const screen = await readTaskScreen(document.getElementById('taskScreenInput').files[0]);
+            const result = await apiCall(isUpdate ? 'update' : 'end', { date: dateStr, task: taskName, start: startedBy, end: empVal, balance: dailyBalanceVal, screen });
+            if (result.success) {
+                saved = true;
+                closeEndTaskModal();
+                supplierBalances = result.balances || { ...supplierBalances, [taskName]: dailyBalanceVal };
+                applyConfirmedTask(result, dateStr, taskName, { status: 'ended', start: startedBy, end: empVal });
+                showToast(isUpdate ? 'تم تسجيل حركة جديدة وتحديث الرصيد' : 'تم إنهاء المهمة وتسجيل الرصيد بنجاح');
+            } else {
+                showToast(result.message || 'حدث خطأ أثناء الإنهاء', true);
+            }
+        } catch (err) {
+            const message = saved
+                ? 'تم حفظ الإنهاء، لكن تعذر تحديث الصفحة. لا تكرر العملية. التفاصيل: ' + err.message
+                : 'تعذر تأكيد حفظ الإنهاء: ' + err.message + ' — راجع سجل Daily قبل إعادة المحاولة.';
+            const notice = document.getElementById('syncNotice');
+            notice.textContent = message;
+            notice.style.display = 'block';
+            showToast(message, true);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerText = isUpdate ? 'تأكيد التحديث' : 'تأكيد الإنهاء وتسجيل الرصيد'; }
+        }
+    }
+
+    /* ================= إعادة فتح / إلغاء المهمة (للمدير والأدمن فقط) ================= */
+    async function resetTaskForDate(taskName, dateStr) {
+        if (!canManage()) {
+            return showToast('هذا الإجراء متاح للمدير أو الأدمن فقط', true);
+        }
+        const reason = prompt('سبب إعادة فتح/إلغاء المهمة (اختياري):', '') || '';
+        if (!confirm('هل أنت متأكد من إعادة فتح المهمة لهذا اليوم؟')) return;
+
+        const state = taskStates[taskName] || {};
+        try {
+            const result = await apiCall('cancel', {
+                date: dateStr, task: taskName,
+                start: state.start || '', end: state.end || '',
+                by: getCurrentEmployee(), reason: reason
+            });
+            if (result.success) {
+                showToast('تمت إعادة فتح المهمة بنجاح.');
+                if (result.state) applyActionState(result, dateStr);
+                if (!result.state) await loadInitialData();
+            } else {
+                showToast(result.message || 'حدث خطأ', true);
+            }
+        } catch (err) {
+            showToast('تعذر الاتصال بجوجل شيت', true);
+        }
+    }
+
+    /* ================= أرصدة الموردين (Modal) ================= */
+    let auditFilterTimer;
+    function queueAuditFilter(surface, search, status = '') {
+        clearTimeout(auditFilterTimer);
+        auditFilterTimer = setTimeout(() => recordActivity('search', '', surface + ': ' + search + (status ? '؛ الحالة: ' + status : '')), 700);
+    }
+    function recordActivity(event, task = '', detail = '') {
+        apiCall('activity', {event, task, detail, date:currentDate()}).then(r => {
+            if (!r.success) showToast('تعذر تسجيل النشاط: ' + r.message, true);
+        }).catch(() => showToast('تعذر إرسال النشاط للسجل', true));
+    }
+    let auditPage = 1, auditRequest = 0;
+    function openAuditLog() {
+        if (getCurrentPermission() !== 'Admin') return showToast('السجل متاح للأدمن فقط', true);
+        document.getElementById('auditModal').classList.add('active');
+        loadAuditLog(1);
+    }
+    async function loadAuditLog(page) {
+        const request = ++auditRequest;
+        const message = document.getElementById('auditMessage');
+        document.getElementById('auditLogBody').innerHTML = '';
+        message.textContent = 'جاري تحميل السجل...';
+        try {
+            const result = await apiCall('logs', {date:document.getElementById('auditDate').value, user:document.getElementById('auditUser').value, task:document.getElementById('auditTask').value, page});
+            if (request !== auditRequest) return;
+            if (!result.success) throw new Error(result.message);
+            const head = document.getElementById('auditLogHead'); head.innerHTML = '';
+            const labels = ['التوقيت','ID المستخدم','اسم المستخدم','الصلاحية','العملية','المهمة','تاريخ المهمة','الموظف المختار','الرصيد','الصورة','قبل','بعد','النتيجة','التفاصيل'];
+            labels.forEach(label => { const cell = document.createElement('th'); cell.textContent = label; head.appendChild(cell); });
+            const actions = {login:'دخول',logout:'خروج',init:'فتح المهام',balances:'عرض الأرصدة',start:'بدء',end:'إنهاء',update:'تحديث',cancel:'إعادة فتح',logs:'عرض السجل',pin:'تثبيت',unpin:'إلغاء التثبيت',reorder:'تحريك',collapse:'طي تصنيف',expand:'فتح تصنيف',search:'بحث',filter:'فلترة'};
+            result.rows.forEach(values => {
+                const row = document.createElement('tr');
+                values.forEach((value,i) => {const cell = document.createElement('td'); cell.textContent = i === 4 ? actions[value] || value : String(value ?? ''); row.appendChild(cell);});
+                document.getElementById('auditLogBody').appendChild(row);
+            });
+            auditPage=result.page;
+            message.textContent = result.total ? result.total + ' نشاط' : 'لا يوجد نشاط مطابق';
+            document.getElementById('auditPageLabel').textContent = 'صفحة ' + result.page + ' من ' + result.pages;
+            document.getElementById('auditPrev').disabled = result.page <= 1;
+            document.getElementById('auditNext').disabled = result.page >= result.pages;
+        } catch(err) { if(request === auditRequest) message.textContent = err.message; }
+    }
+
+    function openSupplierModal() {
+        document.getElementById('supplierSearchInput').value = '';
+        document.getElementById('supplierBalanceDate').value = currentDate();
+        document.getElementById('supplierModal').classList.add('active');
+        loadSupplierDateBalances();
+    }
+
+    let supplierDateBalances = {};
+    let supplierBalanceRequest = 0;
+    let supplierBalancesReady = false;
+    async function loadSupplierDateBalances() {
+        const date = document.getElementById('supplierBalanceDate').value;
+        const request = ++supplierBalanceRequest;
+        supplierBalancesReady = false;
+        supplierDateBalances = {};
+        const message = document.getElementById('supplierBalanceMessage');
+        message.textContent = date ? 'جاري تحميل الأرصدة...' : 'اختر تاريخ الحركة.';
+        document.getElementById('supplierTableBody').innerHTML = '';
+        if (!date) return;
+        try {
+            const result = await apiCall('balances', { date });
+            if (request !== supplierBalanceRequest) return;
+            if (!result.success || !result.balances) throw new Error(result.message || 'حدّث نشر كود Google لتحميل أرصدة التاريخ');
+            supplierDateBalances = result.balances;
+            supplierBalancesReady = true;
+            message.textContent = 'أرصدة يوم ' + date;
+            renderSupplierTable();
+        } catch (err) {
+            if (request === supplierBalanceRequest) message.textContent = 'تعذر تحميل الأرصدة: ' + err.message;
+        }
+    }
+
+    function closeSupplierModal() {
+        document.getElementById('supplierModal').classList.remove('active');
+    }
+
+    function renderSupplierTable() {
+        const tbody = document.getElementById('supplierTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!supplierBalancesReady) return;
+        const seen = new Set();
+        const normalize = value => String(value).normalize('NFKC').toLocaleLowerCase('ar').replace(/[\u064B-\u065F\u0670\u0640]/g, '').trim();
+        const search = normalize(document.getElementById('supplierSearchInput').value);
+        tasks.forEach(task => {
+            if (!normalize(task.name).includes(search)) return;
+            if (seen.has(task.name)) return;
+            seen.add(task.name);
+            const row = document.createElement('tr');
+            const name = document.createElement('td');
+            name.textContent = task.name;
+            const balance = document.createElement('td');
+            balance.textContent = Object.prototype.hasOwnProperty.call(supplierDateBalances, task.name)
+                ? Number(supplierDateBalances[task.name]).toLocaleString() + ' ج.م'
+                : 'لا توجد حركة';
+            row.append(name, balance);
+            tbody.appendChild(row);
+        });
+        if (!seen.size) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 2;
+            cell.textContent = 'لا توجد مهام مطابقة للبحث.';
+            row.appendChild(cell);
+            tbody.appendChild(row);
+        }
+    }
+</script>
+
+</body>
+</html>

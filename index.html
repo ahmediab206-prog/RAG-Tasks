@@ -245,6 +245,30 @@
             animation: pulseDot 1.5s infinite;
         }
         @keyframes pulseDot { 0%{opacity:1;} 50%{opacity:.3;} 100%{opacity:1;} }
+        /* ===== فلترة الأعمدة (سجل النشاط) — نفس نظام الفلتر بالنقر على أيقونة كل عمود ===== */
+        .th-content { display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.2s; white-space: nowrap; }
+        .th-content:hover { background-color: #eef2ff; }
+        .filter-icon { font-size: 11px; opacity: 0.65; }
+        #auditGlobalSearch { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 8px; }
+        .filter-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); display: none; justify-content: center; align-items: center; z-index: 10000; }
+        .filter-modal-overlay.active { display: flex; }
+        .sheets-filter-popup { background: #fff; border: 1px solid var(--border-color); box-shadow: 0 15px 35px rgba(0,0,0,0.25); border-radius: 14px; width: 320px; max-width: 92vw; display: flex; flex-direction: column; padding: 16px; font-size: 13px; text-align: right; }
+        .popup-title { font-weight: 700; color: var(--primary); margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .popup-menu-item { padding: 8px 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 6px; color: var(--text-main); font-weight: 500; }
+        .popup-menu-item:hover { background-color: #eef2ff; color: var(--primary); }
+        .popup-divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
+        .condition-section { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 10px; }
+        .condition-section select, .condition-section input { margin-top: 6px; margin-bottom: 6px; font-size: 12px; padding: 8px; width: 100%; }
+        .popup-search-box input { width: 100%; padding: 8px 10px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: #f8fafc; outline: none; }
+        .popup-search-box input:focus { border-color: var(--primary); background: #fff; }
+        .popup-checkbox-list { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 4px; margin: 6px 0; border: 1px solid #eee; border-radius: 6px; }
+        .popup-cb-item { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 4px; border-radius: 4px; }
+        .popup-cb-item:hover { background-color: #f8fafc; }
+        .popup-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+        .popup-btn { padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; }
+        .popup-btn-cancel { background: #f8fafc; color: #666; border: 1px solid var(--border-color); }
+        .popup-btn-ok { background: var(--primary); color: #fff; }
+        .select-all-row { font-size: 12px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; border-bottom: 1px solid var(--border-color); margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -299,12 +323,28 @@
                 <button class="btn-reset" onclick="clearDateFilter()" title="إلغاء فلترة التاريخ">إلغاء ❌</button>
             </div>
             <input type="text" id="searchInput" placeholder="🔍 بحث عن مهمة..." oninput="onFilterChange()">
-            <select id="statusFilter" onchange="onFilterChange()" style="width: auto; min-width: 140px;">
-                <option value="all">كل المهام</option>
-                <option value="active">جاري العمل</option>
-                <option value="ended">منتهية</option>
-                <option value="idle">متاحة</option>
-            </select>
+            <div style="position:relative;">
+                <button type="button" class="btn-reset" id="statusFilterBtn" onclick="toggleStatusFilterPanel()" style="min-width:150px; text-align:center;">🔧 فلترة الحالة<span id="statusFilterCount"></span></button>
+                <div id="statusFilterPanel" style="display:none; position:absolute; z-index:50; background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:12px; margin-top:6px; box-shadow:0 10px 25px rgba(0,0,0,0.15); min-width:220px; right:0;">
+                    <div style="font-weight:700; font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">حالة المهمة</div>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="statusStateCB" value="idle" onchange="onFilterChange()"> متاحة (لم تبدأ)</label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="statusStateCB" value="active" onchange="onFilterChange()"> جاري العمل (بدأت)</label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="statusStateCB" value="ended" onchange="onFilterChange()"> منتهية</label>
+                    <div style="height:1px; background:var(--border-color); margin:8px 0;"></div>
+                    <div style="font-weight:700; font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">المطابقة (للمهام المنتهية)</div>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="statusMatchCB" value="مطابق" onchange="onFilterChange()"> ✅ مطابق</label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="statusMatchCB" value="غير مطابق" onchange="onFilterChange()"> ⚠️ غير مطابق</label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; margin-bottom:4px; cursor:pointer;"><input type="checkbox" class="statusMatchCB" value="none" onchange="onFilterChange()"> غير محدد</label>
+                    <div style="height:1px; background:var(--border-color); margin:8px 0;"></div>
+                    <div style="font-weight:700; font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">الموظف (اللي بدأ أو أنهى)</div>
+                    <input type="text" id="employeeFilterSearch" placeholder="بحث باسم الموظف..." oninput="renderEmployeeFilterOptions()" style="width:100%; padding:6px 8px; font-size:0.8rem; border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px;">
+                    <div id="employeeFilterList" style="max-height:130px; overflow-y:auto; border:1px solid var(--border-color); border-radius:6px; padding:4px;"></div>
+                    <div style="display:flex; justify-content:space-between; gap:8px; margin-top:10px;">
+                        <button type="button" class="btn-reset" onclick="clearStatusFilterPanel()">مسح الفلاتر</button>
+                        <button type="button" class="btn-start" onclick="toggleStatusFilterPanel()">تم</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="syncNotice" role="status" style="display:none; padding:12px; margin-bottom:12px; background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; border-radius:10px;"></div>
@@ -352,12 +392,21 @@
                 <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:15px; font-size:0.85rem; border: 1px solid var(--border-color); display:flex; flex-direction:column; gap:5px;">
                     <div>المهمة: <strong id="modalTaskTitle" style="color:var(--primary);">---</strong></div>
                     <div>الموظف: <strong id="modalEmpName">---</strong></div>
-                    <div>رصيد المورد: <strong id="modalCurrentSupplierBalance" style="color:var(--gold);">0 ج.م</strong></div>
+                    <div>رصيد المورد: <strong id="modalCurrentSupplierBalance" style="color:var(--gold);">0 </strong></div>
                 </div>
 
                 <div class="form-group">
                     <label>رصيد المورد الحالي:</label>
                     <input type="number" id="dailyBalanceInput" placeholder="أدخل المبلغ..." min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="taskStatusSelect">حالة المهمة:</label>
+                    <select id="taskStatusSelect">
+                        <option value="">-- اختر الحالة (اختياري) --</option>
+                        <option value="مطابق">✅ مطابق</option>
+                        <option value="غير مطابق">⚠️ غير مطابق</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -413,13 +462,46 @@
     <input id="auditDate" type="date" aria-label="تاريخ النشاط">
     <input id="auditUser" placeholder="اسم المستخدم أو ID" aria-label="المستخدم">
     <input id="auditTask" placeholder="اسم المهمة" aria-label="المهمة">
-    <button class="btn-start" onclick="loadAuditLog(1)">بحث / تحديث</button>
+    <button class="btn-start" onclick="loadAuditLog()">بحث / تحديث</button>
+    <button class="btn-reset" onclick="resetAllAuditFilters()"><span>🧹</span> مسح كل الفلاتر</button>
    </div>
+   <input type="text" id="auditGlobalSearch" placeholder="🔍 بحث عام سريع في كل الأعمدة..." oninput="applyAuditTableFilters()">
    <p id="auditMessage" role="status"></p>
    <div class="table-responsive"><table class="supplier-table"><thead><tr id="auditLogHead"></tr></thead><tbody id="auditLogBody"></tbody></table></div>
-   <div class="pagination"><button id="auditPrev" onclick="loadAuditLog(auditPage-1)">السابق</button><span id="auditPageLabel"></span><button id="auditNext" onclick="loadAuditLog(auditPage+1)">التالي</button></div>
   </div>
  </div>
+</div>
+
+<!-- Modal فلتر عمود السجل (نفس فكرة فلتر جوجل شيت) -->
+<div id="auditFilterModalOverlay" class="filter-modal-overlay" onclick="closeAuditPopupOnOutside(event)">
+  <div class="sheets-filter-popup" id="auditSheetsPopup">
+    <div class="popup-title">
+      <span id="auditPopupTitleText">تصفية العمود</span>
+      <span style="cursor:pointer;color:#777;" onclick="closeAuditPopup()">×</span>
+    </div>
+    <div class="popup-menu-item" onclick="auditPopupSort('asc')">⬆️ الفرز تصاعدياً</div>
+    <div class="popup-menu-item" onclick="auditPopupSort('desc')">⬇️ الفرز تنازلياً</div>
+    <div class="popup-divider"></div>
+    <div id="auditConditionSection" class="condition-section">
+      <label id="auditCondTitle" style="font-weight:700; color:var(--primary); font-size:12px;">فلترة بشرط:</label>
+      <select id="auditCondOperator" onchange="auditHandleOperatorChange()"></select>
+      <div id="auditCondInputsContainer">
+        <input type="text" id="auditCondVal1" placeholder="القيمة..." style="display:none;">
+        <input type="text" id="auditCondVal2" placeholder="القيمة الثانية..." style="display:none;">
+      </div>
+    </div>
+    <div class="popup-search-box">
+      <input type="text" id="auditPopupSearchInput" placeholder="بحث سريع في القيم الفريدة..." oninput="auditFilterPopupCheckboxes()">
+    </div>
+    <div class="select-all-row" onclick="auditToggleSelectAllPopup()">
+      <input type="checkbox" id="auditPopupSelectAllCB" checked> تحديد الكل
+    </div>
+    <div class="popup-checkbox-list" id="auditPopupCheckboxList"></div>
+    <div class="popup-actions">
+      <button class="popup-btn popup-btn-cancel" onclick="closeAuditPopup()">إلغاء</button>
+      <button class="popup-btn popup-btn-ok" onclick="applyAuditPopupFilter()">تطبيق الفلتر</button>
+    </div>
+  </div>
 </div>
 <div id="toast" class="toast"></div>
 
@@ -701,6 +783,7 @@
             taskStates = result.state || {};
             supplierBalances = result.balances || {};
             updateCurrentUser();
+            renderEmployeeFilterOptions();
             renderGrid();
         } catch (err) {
             if (version !== stateRequestVersion) return;
@@ -728,7 +811,6 @@
     function applyActionState(result, date) {
         stateRequestVersion++;
         document.getElementById('taskDate').value = date;
-        document.getElementById('statusFilter').value = 'all';
         taskStates = result.state || {};
         if (result.balances) supplierBalances = result.balances;
         renderGrid();
@@ -777,8 +859,69 @@
         await loadInitialData();
     }
 
+    function getCheckedValues(selector) {
+        return Array.from(document.querySelectorAll(selector)).filter(cb => cb.checked).map(cb => cb.value);
+    }
+
+    let employeeFilterSelected = new Set();
+    function renderEmployeeFilterOptions() {
+        const list = document.getElementById('employeeFilterList');
+        if (!list) return;
+        const search = (document.getElementById('employeeFilterSearch')?.value || '').toLowerCase();
+        const matches = (employees || []).filter(e => e.name.toLowerCase().includes(search) || String(e.id).toLowerCase().includes(search));
+        list.innerHTML = '';
+        if (!matches.length) {
+            list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); padding:4px;">لا يوجد موظفين مطابقين</div>';
+            return;
+        }
+        matches.forEach(emp => {
+            const label = document.createElement('label');
+            label.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:0.8rem; padding:3px 2px; cursor:pointer;';
+            const checked = employeeFilterSelected.has(emp.id);
+            label.innerHTML = `<input type="checkbox" class="employeeFilterCB" value="${escapeHTML(emp.id)}" ${checked ? 'checked' : ''}> <span>${escapeHTML(emp.name)}</span>`;
+            label.querySelector('input').addEventListener('change', (e) => {
+                if (e.target.checked) employeeFilterSelected.add(emp.id); else employeeFilterSelected.delete(emp.id);
+                onFilterChange();
+            });
+            list.appendChild(label);
+        });
+    }
+
+    function updateStatusFilterCount() {
+        const count = getCheckedValues('.statusStateCB').length + getCheckedValues('.statusMatchCB').length + employeeFilterSelected.size;
+        document.getElementById('statusFilterCount').textContent = count ? ` (${count})` : '';
+    }
+
+    function toggleStatusFilterPanel() {
+        const panel = document.getElementById('statusFilterPanel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function clearStatusFilterPanel() {
+        document.querySelectorAll('.statusStateCB, .statusMatchCB').forEach(cb => cb.checked = false);
+        employeeFilterSelected.clear();
+        const searchBox = document.getElementById('employeeFilterSearch');
+        if (searchBox) searchBox.value = '';
+        renderEmployeeFilterOptions();
+        onFilterChange();
+    }
+
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('statusFilterPanel');
+        const btn = document.getElementById('statusFilterBtn');
+        if (panel && panel.style.display === 'block' && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
+
     function onFilterChange() {
-        queueAuditFilter('المهام', document.getElementById('searchInput').value, document.getElementById('statusFilter').value);
+        updateStatusFilterCount();
+        const stateLabels = { idle: 'متاحة', active: 'جارية', ended: 'منتهية' };
+        const matchLabels = { 'مطابق': 'مطابق', 'غير مطابق': 'غير مطابق', none: 'غير محدد' };
+        const stateDesc = getCheckedValues('.statusStateCB').map(v => stateLabels[v]).join('/') || 'الكل';
+        const matchDesc = getCheckedValues('.statusMatchCB').map(v => matchLabels[v]).join('/') || 'الكل';
+        const empDesc = employeeFilterSelected.size ? Array.from(employeeFilterSelected).map(id => employeeName(id)).join('/') : 'الكل';
+        queueAuditFilter('المهام', document.getElementById('searchInput').value, 'الحالة: ' + stateDesc + '؛ المطابقة: ' + matchDesc + '؛ الموظف: ' + empDesc);
         categoryPages.clear();
         renderGrid();
     }
@@ -786,7 +929,8 @@
     function getFilteredTasks() {
         const layout = readTaskLayout();
         const search = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
-        const status = document.getElementById('statusFilter') ? document.getElementById('statusFilter').value : 'all';
+        const stateFilters = getCheckedValues('.statusStateCB');
+        const matchFilters = getCheckedValues('.statusMatchCB');
         const selectedDate = currentDate();
 
         return tasks
@@ -802,12 +946,18 @@
                 const isActive = item.taskState && item.taskState.status === 'in_progress';
                 const isIdle = !item.taskState;
 
-                const matchesStatus = status === 'all' ||
-                    (status === 'active' && isActive) ||
-                    (status === 'ended' && isEnded) ||
-                    (status === 'idle' && isIdle);
+                const matchesState = stateFilters.length === 0 ||
+                    (stateFilters.includes('active') && isActive) ||
+                    (stateFilters.includes('ended') && isEnded) ||
+                    (stateFilters.includes('idle') && isIdle);
 
-                return matchesSearch && matchesStatus;
+                const matchValue = isEnded ? (item.taskState.matchStatus || 'none') : 'none';
+                const matchesMatching = matchFilters.length === 0 || matchFilters.includes(matchValue);
+
+                const matchesEmployee = employeeFilterSelected.size === 0 ||
+                    (item.taskState && (employeeFilterSelected.has(item.taskState.start) || employeeFilterSelected.has(item.taskState.end)));
+
+                return matchesSearch && matchesState && matchesMatching && matchesEmployee;
             })
             .sort((a, b) => {
                 const categoryOrder = a.category.localeCompare(b.category, 'ar');
@@ -827,6 +977,12 @@
         const selections = new Map(Array.from(grid.querySelectorAll('select')).map(el => [el.id, el.value]));
         grid.innerHTML = '';
         const filtered = getFilteredTasks();
+
+        // تُبنى مرة واحدة فقط لكل رسم للشبكة بدل ما تتبني من جديد لكل كارت (كانت بتتكرر لكل مهمة في كل تحديث لحظي)
+        let empOptions = '<option value="">-- الموظف --</option>';
+        employees.forEach(emp => {
+            empOptions += `<option value="${escapeHTML(emp.id)}">${escapeHTML(emp.name)}</option>`;
+        });
 
         const groups = new Map();
         filtered.forEach(item => {
@@ -857,15 +1013,10 @@
                 pageItems.forEach(item => {
             const card = document.createElement('div');
 
-            let empOptions = '<option value="">-- الموظف --</option>';
-            employees.forEach(emp => {
-                empOptions += `<option value="${escapeHTML(emp.id)}">${escapeHTML(emp.name)}</option>`;
-            });
-
             const balanceHTML = `
                 <div class="supplier-balance-box">
                     <span class="supplier-balance-label">💼 رصيد المورد:</span>
-                    <span class="supplier-balance-amount">${item.balance === null ? 'لا توجد حركة' : item.balance.toLocaleString() + ' ج.م'}</span>
+                    <span class="supplier-balance-amount">${item.balance === null ? 'لا توجد حركة' : item.balance.toLocaleString() + ' '}</span>
                 </div>
             `;
 
@@ -887,6 +1038,7 @@
                     <div style="font-size: 0.8rem; color: var(--text-muted); display:flex; flex-direction:column; gap:3px; margin: 6px 0;">
                         <div>بدأ: <strong style="color:var(--text-main);">${escapeHTML(employeeName(item.taskState.start))}</strong></div>
                         <div>أنهى: <strong style="color:var(--text-main);">${escapeHTML(employeeName(item.taskState.end))}</strong></div>
+                        ${item.taskState.matchStatus ? `<div>الحالة: <strong style="color:${item.taskState.matchStatus === 'مطابق' ? 'var(--primary)' : 'var(--danger)'};">${item.taskState.matchStatus === 'مطابق' ? '✅ مطابق' : '⚠️ غير مطابق'}</strong></div>` : ''}
                     </div>
                     <div class="task-actions" style="justify-content: flex-end; margin-top:8px;">
                         ${resetBtn}
@@ -1027,8 +1179,9 @@
         document.getElementById('endTaskModal').dataset.isUpdate = String(isUpdate);
         document.querySelector('#endTaskModal h2').textContent = isUpdate ? 'تحديث رصيد المهمة' : 'إنهاء المهمة وتسجيل الرصيد';
         document.querySelector('#endTaskModal .btn-end').textContent = isUpdate ? 'تأكيد التحديث' : 'تأكيد الإنهاء وتسجيل الرصيد';
-        document.getElementById('modalCurrentSupplierBalance').innerText = currentSupplierBal === null ? 'لا توجد حركة' : `${currentSupplierBal.toLocaleString()} ج.م`;
+        document.getElementById('modalCurrentSupplierBalance').innerText = currentSupplierBal === null ? 'لا توجد حركة' : `${currentSupplierBal.toLocaleString()} `;
         document.getElementById('dailyBalanceInput').value = '';
+        document.getElementById('taskStatusSelect').value = isUpdate ? (state.matchStatus || '') : '';
 
         // نحتفظ باسم من بدأ لإرساله للسيرفر مع الإنهاء
         document.getElementById('endTaskModal').dataset.startedBy = isUpdate ? empVal : state.start || '';
@@ -1100,12 +1253,13 @@
 
         try {
             const screen = await readTaskScreen(document.getElementById('taskScreenInput').files[0]);
-            const result = await apiCall(isUpdate ? 'update' : 'end', { date: dateStr, task: taskName, start: startedBy, end: empVal, balance: dailyBalanceVal, screen });
+            const statusVal = document.getElementById('taskStatusSelect').value;
+            const result = await apiCall(isUpdate ? 'update' : 'end', { date: dateStr, task: taskName, start: startedBy, end: empVal, balance: dailyBalanceVal, screen, status: statusVal });
             if (result.success) {
                 saved = true;
                 closeEndTaskModal();
                 supplierBalances = result.balances || { ...supplierBalances, [taskName]: dailyBalanceVal };
-                applyConfirmedTask(result, dateStr, taskName, { status: 'ended', start: startedBy, end: empVal });
+                applyConfirmedTask(result, dateStr, taskName, { status: 'ended', start: startedBy, end: empVal, matchStatus: statusVal });
                 showToast(isUpdate ? 'تم تسجيل حركة جديدة وتحديث الرصيد' : 'تم إنهاء المهمة وتسجيل الرصيد بنجاح');
             } else {
                 showToast(result.message || 'حدث خطأ أثناء الإنهاء', true);
@@ -1161,36 +1315,269 @@
             if (!r.success) showToast('تعذر تسجيل النشاط: ' + r.message, true);
         }).catch(() => showToast('تعذر إرسال النشاط للسجل', true));
     }
-    let auditPage = 1, auditRequest = 0;
+    /* ================= سجل النشاط: تحميل البيانات + فلترة كل عمود ================= */
+    const AUDIT_LABELS = ['التوقيت','ID المستخدم','اسم المستخدم','الصلاحية','العملية','المهمة','تاريخ المهمة','الموظف المختار','الرصيد','الصورة','قبل','بعد','النتيجة','التفاصيل'];
+    const AUDIT_ACTIONS_MAP = {login:'دخول',logout:'خروج',init:'فتح المهام',balances:'عرض الأرصدة',start:'بدء',end:'إنهاء',update:'تحديث',cancel:'إعادة فتح',logs:'عرض السجل',pin:'تثبيت',unpin:'إلغاء التثبيت',reorder:'تحريك',collapse:'طي تصنيف',expand:'فتح تصنيف',search:'بحث',filter:'فلترة'};
+    const AUDIT_NUMERIC_COLS = [8];   // الرصيد
+    const AUDIT_DATE_COLS = [0, 6];   // التوقيت / تاريخ المهمة
+
+    let auditRequest = 0;
+    let auditRawRows = [];           // كل الصفوف كما جاءت من السيرفر (بعد فلاتر التاريخ/المستخدم/المهمة السريعة فقط)
+    let auditColumnFilters = {};     // { colIndex: { value: true/false } }
+    let auditConditions = {};        // { colIndex: { op, val1, val2 } }
+    let auditSortCol = null, auditSortDir = 'asc';
+    let auditOpenCol = null;
+
     function openAuditLog() {
         if (getCurrentPermission() !== 'Admin') return showToast('السجل متاح للأدمن فقط', true);
         document.getElementById('auditModal').classList.add('active');
-        loadAuditLog(1);
+        loadAuditLog();
     }
-    async function loadAuditLog(page) {
+
+    function renderAuditHead() {
+        const head = document.getElementById('auditLogHead');
+        head.innerHTML = '';
+        AUDIT_LABELS.forEach((label, i) => {
+            const cell = document.createElement('th');
+            const wrap = document.createElement('div');
+            wrap.className = 'th-content';
+            wrap.onclick = (e) => openAuditColumnFilter(i, e);
+            const span = document.createElement('span');
+            span.textContent = label;
+            const icon = document.createElement('span');
+            icon.className = 'filter-icon';
+            icon.id = 'auditIcon_' + i;
+            icon.textContent = '⏷';
+            wrap.append(span, icon);
+            cell.appendChild(wrap);
+            head.appendChild(cell);
+        });
+    }
+
+    async function loadAuditLog() {
         const request = ++auditRequest;
         const message = document.getElementById('auditMessage');
         document.getElementById('auditLogBody').innerHTML = '';
         message.textContent = 'جاري تحميل السجل...';
+        renderAuditHead();
         try {
-            const result = await apiCall('logs', {date:document.getElementById('auditDate').value, user:document.getElementById('auditUser').value, task:document.getElementById('auditTask').value, page});
+            const result = await apiCall('logs', {date:document.getElementById('auditDate').value, user:document.getElementById('auditUser').value, task:document.getElementById('auditTask').value});
             if (request !== auditRequest) return;
             if (!result.success) throw new Error(result.message);
-            const head = document.getElementById('auditLogHead'); head.innerHTML = '';
-            const labels = ['التوقيت','ID المستخدم','اسم المستخدم','الصلاحية','العملية','المهمة','تاريخ المهمة','الموظف المختار','الرصيد','الصورة','قبل','بعد','النتيجة','التفاصيل'];
-            labels.forEach(label => { const cell = document.createElement('th'); cell.textContent = label; head.appendChild(cell); });
-            const actions = {login:'دخول',logout:'خروج',init:'فتح المهام',balances:'عرض الأرصدة',start:'بدء',end:'إنهاء',update:'تحديث',cancel:'إعادة فتح',logs:'عرض السجل',pin:'تثبيت',unpin:'إلغاء التثبيت',reorder:'تحريك',collapse:'طي تصنيف',expand:'فتح تصنيف',search:'بحث',filter:'فلترة'};
-            result.rows.forEach(values => {
-                const row = document.createElement('tr');
-                values.forEach((value,i) => {const cell = document.createElement('td'); cell.textContent = i === 4 ? actions[value] || value : String(value ?? ''); row.appendChild(cell);});
-                document.getElementById('auditLogBody').appendChild(row);
-            });
-            auditPage=result.page;
-            message.textContent = result.total ? result.total + ' نشاط' : 'لا يوجد نشاط مطابق';
-            document.getElementById('auditPageLabel').textContent = 'صفحة ' + result.page + ' من ' + result.pages;
-            document.getElementById('auditPrev').disabled = result.page <= 1;
-            document.getElementById('auditNext').disabled = result.page >= result.pages;
+            auditRawRows = result.rows.map(values => values.map((value,i) => i === 4 ? (AUDIT_ACTIONS_MAP[value] || value) : String(value ?? '')));
+            auditColumnFilters = {};
+            auditConditions = {};
+            auditSortCol = null;
+            document.getElementById('auditGlobalSearch').value = '';
+            document.querySelectorAll('.filter-icon').forEach(icon => { icon.style.color = ''; icon.style.opacity = '0.65'; });
+            if (result.truncated) showToast('تم عرض أول ' + auditRawRows.length + ' نشاط من إجمالي ' + result.total + '، ضيّق البحث بالتاريخ لعرض الباقي', true);
+            applyAuditTableFilters();
         } catch(err) { if(request === auditRequest) message.textContent = err.message; }
+    }
+
+    function resetAllAuditFilters() {
+        document.getElementById('auditGlobalSearch').value = '';
+        auditColumnFilters = {};
+        auditConditions = {};
+        auditSortCol = null;
+        document.querySelectorAll('.filter-icon').forEach(icon => { icon.style.color = ''; icon.style.opacity = '0.65'; });
+        applyAuditTableFilters();
+    }
+
+    function applyAuditTableFilters() {
+        const message = document.getElementById('auditMessage');
+        const globalSearch = document.getElementById('auditGlobalSearch').value.toLowerCase().trim();
+        let rows = auditRawRows.slice();
+
+        if (globalSearch) {
+            rows = rows.filter(r => r.some(v => v.toLowerCase().includes(globalSearch)));
+        }
+
+        Object.keys(auditColumnFilters).forEach(colIdx => {
+            const colFilters = auditColumnFilters[colIdx];
+            rows = rows.filter(r => colFilters[String(r[colIdx] ?? '').trim()] !== false);
+        });
+
+        Object.keys(auditConditions).forEach(colIdx => {
+            const cond = auditConditions[colIdx];
+            if (!cond || cond.op === 'none' || cond.val1 === '') return;
+            const isNum = AUDIT_NUMERIC_COLS.includes(Number(colIdx));
+            const isDate = AUDIT_DATE_COLS.includes(Number(colIdx));
+            rows = rows.filter(r => {
+                const itemVal = r[colIdx];
+                if (isNum) {
+                    const val = parseFloat(itemVal) || 0, v1 = parseFloat(cond.val1) || 0, v2 = parseFloat(cond.val2) || 0;
+                    if (cond.op === 'equals') return val === v1;
+                    if (cond.op === 'greater') return val > v1;
+                    if (cond.op === 'less') return val < v1;
+                    if (cond.op === 'between') return val >= v1 && val <= v2;
+                } else if (isDate) {
+                    const valDate = new Date(itemVal).setHours(0,0,0,0);
+                    const v1Date = new Date(cond.val1).setHours(0,0,0,0);
+                    const v2Date = cond.val2 ? new Date(cond.val2).setHours(0,0,0,0) : null;
+                    if (isNaN(valDate)) return false;
+                    if (cond.op === 'equals') return valDate === v1Date;
+                    if (cond.op === 'greater') return valDate > v1Date;
+                    if (cond.op === 'less') return valDate < v1Date;
+                    if (cond.op === 'between') return valDate >= v1Date && valDate <= v2Date;
+                } else {
+                    const strVal = (itemVal || '').toLowerCase(), target = cond.val1.toLowerCase();
+                    if (cond.op === 'contains') return strVal.includes(target);
+                    if (cond.op === 'notContains') return !strVal.includes(target);
+                    if (cond.op === 'startsWith') return strVal.startsWith(target);
+                    if (cond.op === 'endsWith') return strVal.endsWith(target);
+                    if (cond.op === 'equals') return strVal === target;
+                }
+                return true;
+            });
+        });
+
+        if (auditSortCol !== null) {
+            const isNum = AUDIT_NUMERIC_COLS.includes(auditSortCol);
+            rows.sort((a, b) => {
+                let va = a[auditSortCol], vb = b[auditSortCol];
+                if (isNum) { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+                else { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+                if (va < vb) return auditSortDir === 'asc' ? -1 : 1;
+                if (va > vb) return auditSortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        const body = document.getElementById('auditLogBody');
+        body.innerHTML = '';
+        rows.forEach(values => {
+            const row = document.createElement('tr');
+            values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.appendChild(cell); });
+            body.appendChild(row);
+        });
+        message.textContent = rows.length ? rows.length + ' نشاط (من أصل ' + auditRawRows.length + ')' : 'لا يوجد نشاط مطابق للبحث/الفلتر';
+    }
+
+    /* ---- نافذة فلترة العمود (نفس أسلوب فلتر جوجل شيت) ---- */
+    function openAuditColumnFilter(colIdx, event) {
+        event.stopPropagation();
+        auditOpenCol = colIdx;
+        document.getElementById('auditPopupTitleText').innerText = 'فلتر عمود: ' + AUDIT_LABELS[colIdx];
+
+        const isNum = AUDIT_NUMERIC_COLS.includes(colIdx);
+        const isDate = AUDIT_DATE_COLS.includes(colIdx);
+        const operator = document.getElementById('auditCondOperator');
+        operator.innerHTML = '<option value="none">-- بدون شرط متقدم --</option>';
+        if (isNum) {
+            document.getElementById('auditCondTitle').innerText = 'فلترة بشرط رقمي:';
+            operator.innerHTML += '<option value="equals">يساوي (=)</option><option value="greater">أكبر من (>)</option><option value="less">أصغر من (<)</option><option value="between">بين رقمين</option>';
+        } else if (isDate) {
+            document.getElementById('auditCondTitle').innerText = 'فلترة بشرط التاريخ:';
+            operator.innerHTML += '<option value="equals">في تاريخ (=)</option><option value="greater">بعد تاريخ</option><option value="less">قبل تاريخ</option><option value="between">بين تاريخين</option>';
+        } else {
+            document.getElementById('auditCondTitle').innerText = 'فلترة بشرط نصي:';
+            operator.innerHTML += '<option value="contains">يحتوي على</option><option value="notContains">لا يحتوي على</option><option value="startsWith">يبدأ بـ</option><option value="endsWith">ينتهي بـ</option><option value="equals">يساوي تماماً</option>';
+        }
+        const existing = auditConditions[colIdx] || { op: 'none', val1: '', val2: '' };
+        operator.value = existing.op;
+        renderAuditConditionInputs(isNum ? 'number' : isDate ? 'date' : 'text', existing.val1, existing.val2);
+
+        const uniqueVals = new Set();
+        auditRawRows.forEach(r => uniqueVals.add(String(r[colIdx] ?? '').trim()));
+
+        const list = document.getElementById('auditPopupCheckboxList');
+        list.innerHTML = '';
+        document.getElementById('auditPopupSearchInput').value = '';
+        document.getElementById('auditPopupSelectAllCB').checked = true;
+
+        if (!auditColumnFilters[colIdx]) {
+            auditColumnFilters[colIdx] = {};
+            uniqueVals.forEach(v => auditColumnFilters[colIdx][v] = true);
+        }
+        Array.from(uniqueVals).sort().forEach(val => {
+            const isChecked = auditColumnFilters[colIdx][val] !== false;
+            const label = document.createElement('label');
+            label.className = 'popup-cb-item';
+            label.innerHTML = `<input type="checkbox" class="audit-val-cb" value="${escapeHTML(val)}" ${isChecked ? 'checked' : ''} onchange="auditUpdateSelectAllState()"><span>${val === '' ? '(فارغ)' : escapeHTML(val)}</span>`;
+            list.appendChild(label);
+        });
+
+        document.getElementById('auditFilterModalOverlay').classList.add('active');
+    }
+
+    function renderAuditConditionInputs(colType, val1 = '', val2 = '') {
+        const container = document.getElementById('auditCondInputsContainer');
+        const inputType = colType === 'number' ? 'number' : colType === 'date' ? 'date' : 'text';
+        const op = document.getElementById('auditCondOperator').value;
+        let html = '';
+        if (op !== 'none') {
+            html += `<input type="${inputType}" id="auditCondVal1" placeholder="أدخل القيمة..." value="${val1}">`;
+            if (op === 'between') html += `<input type="${inputType}" id="auditCondVal2" placeholder="أدخل القيمة الثانية..." value="${val2}">`;
+        }
+        container.innerHTML = html;
+    }
+
+    function auditHandleOperatorChange() {
+        const isNum = AUDIT_NUMERIC_COLS.includes(auditOpenCol);
+        const isDate = AUDIT_DATE_COLS.includes(auditOpenCol);
+        renderAuditConditionInputs(isNum ? 'number' : isDate ? 'date' : 'text');
+    }
+
+    function auditFilterPopupCheckboxes() {
+        const search = document.getElementById('auditPopupSearchInput').value.toLowerCase();
+        document.querySelectorAll('#auditPopupCheckboxList .popup-cb-item').forEach(item => {
+            const text = item.querySelector('span').innerText.toLowerCase();
+            item.style.display = text.includes(search) ? 'flex' : 'none';
+        });
+    }
+
+    function auditToggleSelectAllPopup() {
+        const cb = document.getElementById('auditPopupSelectAllCB');
+        cb.checked = !cb.checked;
+        document.querySelectorAll('.audit-val-cb').forEach(item => {
+            if (item.closest('.popup-cb-item').style.display !== 'none') item.checked = cb.checked;
+        });
+    }
+
+    function auditUpdateSelectAllState() {
+        const all = document.querySelectorAll('.audit-val-cb');
+        const checked = document.querySelectorAll('.audit-val-cb:checked');
+        document.getElementById('auditPopupSelectAllCB').checked = all.length === checked.length;
+    }
+
+    function auditPopupSort(direction) {
+        auditSortCol = auditOpenCol;
+        auditSortDir = direction;
+        closeAuditPopup();
+        applyAuditTableFilters();
+    }
+
+    function closeAuditPopup() {
+        document.getElementById('auditFilterModalOverlay').classList.remove('active');
+        auditOpenCol = null;
+    }
+
+    function closeAuditPopupOnOutside(e) {
+        if (e.target.id === 'auditFilterModalOverlay') closeAuditPopup();
+    }
+
+    function applyAuditPopupFilter() {
+        if (auditOpenCol === null) return;
+        if (!auditColumnFilters[auditOpenCol]) auditColumnFilters[auditOpenCol] = {};
+        document.querySelectorAll('.audit-val-cb').forEach(cb => { auditColumnFilters[auditOpenCol][cb.value] = cb.checked; });
+
+        const op = document.getElementById('auditCondOperator').value;
+        const v1El = document.getElementById('auditCondVal1');
+        const v2El = document.getElementById('auditCondVal2');
+        const val1 = v1El ? v1El.value.trim() : '';
+        const val2 = v2El ? v2El.value.trim() : '';
+        auditConditions[auditOpenCol] = { op, val1, val2 };
+
+        const icon = document.getElementById('auditIcon_' + auditOpenCol);
+        if (icon) {
+            const hasUnchecked = Object.values(auditColumnFilters[auditOpenCol]).includes(false);
+            const hasCondition = op !== 'none' && val1 !== '';
+            icon.style.color = (hasUnchecked || hasCondition) ? 'var(--danger)' : '';
+            icon.style.opacity = (hasUnchecked || hasCondition) ? '1' : '0.65';
+        }
+        closeAuditPopup();
+        applyAuditTableFilters();
     }
 
     function openSupplierModal() {
@@ -1246,7 +1633,7 @@
             name.textContent = task.name;
             const balance = document.createElement('td');
             balance.textContent = Object.prototype.hasOwnProperty.call(supplierDateBalances, task.name)
-                ? Number(supplierDateBalances[task.name]).toLocaleString() + ' ج.م'
+                ? Number(supplierDateBalances[task.name]).toLocaleString() + ' '
                 : 'لا توجد حركة';
             row.append(name, balance);
             tbody.appendChild(row);

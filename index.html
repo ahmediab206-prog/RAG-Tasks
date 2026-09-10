@@ -646,6 +646,14 @@
         const emp = employees.find(e => e.id === String(id));
         return emp ? emp.name : (id || '---');
     }
+    // بيحول أي قيمة "بدأ/أنهى" جاية من شيت Daily (ID أو اسم، رقم أو نص) لنفس صيغة الـ ID المستخدمة في قايمة الموظفين،
+    // عشان فلتر الموظف يشتغل صح مهما كان شكل القيمة المسجلة فعليًا في الشيت
+    function resolveEmployeeId(raw) {
+        if (raw === undefined || raw === null || raw === '') return '';
+        const rawStr = String(raw).trim();
+        const found = employees.find(e => String(e.id).trim() === rawStr || String(e.name).trim() === rawStr);
+        return found ? String(found.id) : rawStr;
+    }
     function updateCurrentUser() {
         const name = employeeName(getCurrentEmployee());
         document.getElementById('currentUserName').textContent = name;
@@ -967,7 +975,7 @@
                 const matchesMatching = matchFilters.length === 0 || matchFilters.includes(matchValue);
 
                 const matchesEmployee = employeeFilterSelected.size === 0 ||
-                    (item.taskState && (employeeFilterSelected.has(String(item.taskState.start ?? '')) || employeeFilterSelected.has(String(item.taskState.end ?? ''))));
+                    (item.taskState && (employeeFilterSelected.has(resolveEmployeeId(item.taskState.start)) || employeeFilterSelected.has(resolveEmployeeId(item.taskState.end))));
 
                 return matchesSearch && matchesState && matchesMatching && matchesEmployee;
             })

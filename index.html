@@ -478,6 +478,7 @@
   <div class="modal-header"><h2>معاينة الصورة</h2><button class="modal-close" onclick="closeScreenPreview()">×</button></div>
   <div class="modal-body" style="text-align:center;">
    <img id="screenPreviewImage" alt="صورة مرفقة" style="max-width:100%; max-height:70vh; border-radius:8px;">
+   <div><a id="screenPreviewFallback" href="#" target="_blank" rel="noopener" class="btn-start" style="display:none; margin-top:8px; text-decoration:none;">تعذّرت المعاينة هنا، افتح الصورة في نافذة جديدة</a></div>
   </div>
  </div>
 </div>
@@ -966,7 +967,7 @@
                 const matchesMatching = matchFilters.length === 0 || matchFilters.includes(matchValue);
 
                 const matchesEmployee = employeeFilterSelected.size === 0 ||
-                    (item.taskState && (employeeFilterSelected.has(item.taskState.start) || employeeFilterSelected.has(item.taskState.end)));
+                    (item.taskState && (employeeFilterSelected.has(String(item.taskState.start ?? '')) || employeeFilterSelected.has(String(item.taskState.end ?? ''))));
 
                 return matchesSearch && matchesState && matchesMatching && matchesEmployee;
             })
@@ -1481,8 +1482,19 @@
         message.textContent = rows.length ? rows.length + ' نشاط (من أصل ' + auditRawRows.length + ')' : 'لا يوجد نشاط مطابق للبحث/الفلتر';
     }
 
+    function driveEmbedUrl(url) {
+        // بيحوّل أي شكل من روابط جوجل درايڤ (القديمة أو الجديدة) لرابط عرض مباشر يشتغل جوه <img>
+        const m = String(url || '').match(/\/d\/([a-zA-Z0-9_-]+)/) || String(url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        return m ? ('https://lh3.googleusercontent.com/d/' + m[1] + '=w1600') : url;
+    }
     function openScreenPreview(url) {
-        document.getElementById('screenPreviewImage').src = url;
+        const img = document.getElementById('screenPreviewImage');
+        const fallback = document.getElementById('screenPreviewFallback');
+        fallback.style.display = 'none';
+        fallback.href = url;
+        img.style.display = 'block';
+        img.onerror = () => { img.style.display = 'none'; fallback.style.display = 'inline-block'; };
+        img.src = driveEmbedUrl(url);
         document.getElementById('screenPreviewModal').classList.add('active');
     }
     function closeScreenPreview() {

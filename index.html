@@ -474,11 +474,23 @@
 
 <!-- Modal معاينة صورة السجل -->
 <div class="modal-overlay" id="screenPreviewModal">
- <div class="modal" style="max-width:min(680px, 92vw);">
-  <div class="modal-header"><h2>معاينة الصورة</h2><button class="modal-close" onclick="closeScreenPreview()">×</button></div>
-  <div class="modal-body" style="text-align:center;">
-   <img id="screenPreviewImage" alt="صورة مرفقة" style="max-width:100%; max-height:70vh; border-radius:8px;">
-   <div><a id="screenPreviewFallback" href="#" target="_blank" rel="noopener" class="btn-start" style="display:none; margin-top:8px; text-decoration:none;">تعذّرت المعاينة هنا، افتح الصورة في نافذة جديدة</a></div>
+ <div class="modal" style="max-width:min(920px, 96vw);">
+  <div class="modal-header">
+   <h2>معاينة الصورة</h2>
+   <div style="display:flex; align-items:center; gap:6px;">
+    <button type="button" class="btn-reset" onclick="zoomScreenPreview(-0.25)" title="تصغير" style="padding:4px 10px;">−</button>
+    <button type="button" class="btn-reset" onclick="zoomScreenPreview(0.25)" title="تكبير" style="padding:4px 10px;">+</button>
+    <button type="button" class="btn-reset" onclick="resetScreenPreviewZoom()" title="إعادة الضبط" style="padding:4px 10px;">⟲</button>
+    <button class="modal-close" onclick="closeScreenPreview()">×</button>
+   </div>
+  </div>
+  <div class="modal-body" style="text-align:center; padding:0;">
+   <div id="screenPreviewViewport" style="position:relative; width:100%; height:min(75vh, 640px); overflow:hidden; background:#111; border-radius:8px; cursor:grab;">
+    <img id="screenPreviewImage" alt="صورة مرفقة" draggable="false"
+         style="position:absolute; top:50%; left:50%; max-width:100%; max-height:100%; width:auto; height:auto; transform:translate(-50%,-50%) scale(1); transform-origin:center center; user-select:none;">
+    <iframe id="screenPreviewFrame" style="display:none; width:100%; height:100%; border:0;" allow="autoplay"></iframe>
+   </div>
+   <div style="padding:8px;"><a id="screenPreviewFallback" href="#" target="_blank" rel="noopener" class="btn-start" style="display:none; text-decoration:none;">تعذّرت المعاينة هنا، افتح الصورة في تاب جديد</a></div>
   </div>
  </div>
 </div>
@@ -1493,21 +1505,95 @@
     function driveEmbedUrl(url) {
         // بيحوّل أي شكل من روابط جوجل درايڤ (القديمة أو الجديدة) لرابط عرض مباشر يشتغل جوه <img>
         const m = String(url || '').match(/\/d\/([a-zA-Z0-9_-]+)/) || String(url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        return m ? ('https://lh3.googleusercontent.com/d/' + m[1] + '=w1600') : url;
+        return m ? { id: m[1], imgUrl: 'https://lh3.googleusercontent.com/d/' + m[1] + '=w1600' } : { id: null, imgUrl: url };
     }
+
+    let screenPreviewZoom = 1, screenPreviewX = 0, screenPreviewY = 0;
+    let screenPreviewDragging = false, screenPreviewDragStart = null;
+
+    function applyScreenPreviewTransform() {
+        const img = document.getElementById('screenPreviewImage');
+        img.style.transform = `translate(calc(-50% + ${screenPreviewX}px), calc(-50% + ${screenPreviewY}px)) scale(${screenPreviewZoom})`;
+    }
+    function resetScreenPreviewZoom() {
+        screenPreviewZoom = 1; screenPreviewX = 0; screenPreviewY = 0;
+        applyScreenPreviewTransform();
+    }
+    function zoomScreenPreview(delta) {
+        screenPreviewZoom = Math.min(6, Math.max(1, screenPreviewZoom + delta));
+        if (screenPreviewZoom === 1) { screenPreviewX = 0; screenPreviewY = 0; }
+        applyScreenPreviewTransform();
+    }
+
+    function initScreenPreviewInteractions() {
+        const viewport = document.getElementById('screenPreviewViewport');
+        if (viewport.dataset.wired) return;
+        viewport.dataset.wired = '1';
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            zoomScreenPreview(e.deltaY < 0 ? 0.2 : -0.2);
+        }, { passive: false });
+        viewport.addEventListener('dblclick', () => {
+            zoomScreenPreview(screenPreviewZoom > 1 ? -6 : 1.5);
+        });
+        viewport.addEventListener('mousedown', (e) => {
+            if (screenPreviewZoom <= 1) return;
+            screenPreviewDragging = true;
+            screenPreviewDragStart = { x: e.clientX - screenPreviewX, y: e.clientY - screenPreviewY };
+            viewport.style.cursor = 'grabbing';
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!screenPreviewDragging) return;
+            screenPreviewX = e.clientX - screenPreviewDragStart.x;
+            screenPreviewY = e.clientY - screenPreviewDragStart.y;
+            applyScreenPreviewTransform();
+        });
+        window.addEventListener('mouseup', () => { screenPreviewDragging = false; viewport.style.cursor = 'grab'; });
+        // دعم اللمس (موبايل/تابلت): سحب بإصبع واحد بعد التكبير
+        viewport.addEventListener('touchstart', (e) => {
+            if (screenPreviewZoom <= 1 || e.touches.length !== 1) return;
+            screenPreviewDragging = true;
+            screenPreviewDragStart = { x: e.touches[0].clientX - screenPreviewX, y: e.touches[0].clientY - screenPreviewY };
+        }, { passive: true });
+        viewport.addEventListener('touchmove', (e) => {
+            if (!screenPreviewDragging || e.touches.length !== 1) return;
+            screenPreviewX = e.touches[0].clientX - screenPreviewDragStart.x;
+            screenPreviewY = e.touches[0].clientY - screenPreviewDragStart.y;
+            applyScreenPreviewTransform();
+        }, { passive: true });
+        viewport.addEventListener('touchend', () => { screenPreviewDragging = false; });
+    }
+
     function openScreenPreview(url) {
         const img = document.getElementById('screenPreviewImage');
+        const frame = document.getElementById('screenPreviewFrame');
         const fallback = document.getElementById('screenPreviewFallback');
+        resetScreenPreviewZoom();
         fallback.style.display = 'none';
         fallback.href = url;
+        frame.style.display = 'none';
+        frame.src = '';
         img.style.display = 'block';
-        img.onerror = () => { img.style.display = 'none'; fallback.style.display = 'inline-block'; };
-        img.src = driveEmbedUrl(url);
+
+        const { id, imgUrl } = driveEmbedUrl(url);
+        img.onerror = () => {
+            img.style.display = 'none';
+            if (id) {
+                // فولباك: نستخدم معاين جوجل درايڤ الرسمي جوه iframe، بيشتغل حتى لو الصورة رفضت تتحمّل مباشرة كـ <img>
+                frame.src = 'https://drive.google.com/file/d/' + id + '/preview';
+                frame.style.display = 'block';
+            } else {
+                fallback.style.display = 'inline-block';
+            }
+        };
+        img.src = imgUrl;
+        initScreenPreviewInteractions();
         document.getElementById('screenPreviewModal').classList.add('active');
     }
     function closeScreenPreview() {
         document.getElementById('screenPreviewModal').classList.remove('active');
         document.getElementById('screenPreviewImage').removeAttribute('src');
+        document.getElementById('screenPreviewFrame').src = '';
     }
 
     /* ---- نافذة فلترة العمود (نفس أسلوب فلتر جوجل شيت) ---- */

@@ -472,6 +472,16 @@
  </div>
 </div>
 
+<!-- Modal معاينة صورة السجل -->
+<div class="modal-overlay" id="screenPreviewModal">
+ <div class="modal" style="max-width:min(680px, 92vw);">
+  <div class="modal-header"><h2>معاينة الصورة</h2><button class="modal-close" onclick="closeScreenPreview()">×</button></div>
+  <div class="modal-body" style="text-align:center;">
+   <img id="screenPreviewImage" alt="صورة مرفقة" style="max-width:100%; max-height:70vh; border-radius:8px;">
+  </div>
+ </div>
+</div>
+
 <!-- Modal فلتر عمود السجل (نفس فكرة فلتر جوجل شيت) -->
 <div id="auditFilterModalOverlay" class="filter-modal-overlay" onclick="closeAuditPopupOnOutside(event)">
   <div class="sheets-filter-popup" id="auditSheetsPopup">
@@ -779,6 +789,7 @@
             if (version !== stateRequestVersion || date !== currentDate() || !getCurrentEmployee()) return;
             if (!result.success) throw new Error(result.message || 'تعذر تحميل البيانات');
             employees = (result.employees || []).map(e => typeof e === 'string' ? {id:e, name:e} : e);
+            employees.sort((a, b) => String(a.name).localeCompare(String(b.name), 'ar'));
             tasks = result.tasks || [];
             taskStates = result.state || {};
             supplierBalances = result.balances || {};
@@ -1446,12 +1457,37 @@
 
         const body = document.getElementById('auditLogBody');
         body.innerHTML = '';
+        const screenColIdx = AUDIT_LABELS.indexOf('الصورة');
         rows.forEach(values => {
             const row = document.createElement('tr');
-            values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.appendChild(cell); });
+            values.forEach((value, i) => {
+                const cell = document.createElement('td');
+                if (i === screenColIdx && value && /^https?:\/\//.test(value)) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn-start';
+                    btn.style.padding = '4px 10px';
+                    btn.style.fontSize = '0.78rem';
+                    btn.textContent = 'معاينة 🖼️';
+                    btn.onclick = () => openScreenPreview(value);
+                    cell.appendChild(btn);
+                } else {
+                    cell.textContent = value;
+                }
+                row.appendChild(cell);
+            });
             body.appendChild(row);
         });
         message.textContent = rows.length ? rows.length + ' نشاط (من أصل ' + auditRawRows.length + ')' : 'لا يوجد نشاط مطابق للبحث/الفلتر';
+    }
+
+    function openScreenPreview(url) {
+        document.getElementById('screenPreviewImage').src = url;
+        document.getElementById('screenPreviewModal').classList.add('active');
+    }
+    function closeScreenPreview() {
+        document.getElementById('screenPreviewModal').classList.remove('active');
+        document.getElementById('screenPreviewImage').removeAttribute('src');
     }
 
     /* ---- نافذة فلترة العمود (نفس أسلوب فلتر جوجل شيت) ---- */

@@ -458,16 +458,41 @@
  <div class="modal" style="max-width:1200px;">
   <div class="modal-header"><h2>سجل النشاط — Admin</h2><button class="modal-close" onclick="document.getElementById('auditModal').classList.remove('active')">×</button></div>
   <div class="modal-body">
-   <div class="toolbar">
-    <input id="auditDate" type="date" aria-label="تاريخ النشاط">
-    <input id="auditUser" placeholder="اسم المستخدم أو ID" aria-label="المستخدم">
-    <input id="auditTask" placeholder="اسم المهمة" aria-label="المهمة">
-    <button class="btn-start" onclick="loadAuditLog()">بحث / تحديث</button>
-    <button class="btn-reset" onclick="resetAllAuditFilters()"><span>🧹</span> مسح كل الفلاتر</button>
+   <div class="toolbar" style="margin-bottom:10px;">
+    <button type="button" id="auditTabBtnFull" class="btn-start" onclick="switchAuditTab('full')">📋 السجل الكامل</button>
+    <button type="button" id="auditTabBtnEmp" class="btn-reset" onclick="switchAuditTab('employee')">🧑‍💼 نشاط الموظفين</button>
    </div>
-   <input type="text" id="auditGlobalSearch" placeholder="🔍 بحث عام سريع في كل الأعمدة..." oninput="applyAuditTableFilters()">
-   <p id="auditMessage" role="status"></p>
-   <div class="table-responsive"><table class="supplier-table"><thead><tr id="auditLogHead"></tr></thead><tbody id="auditLogBody"></tbody></table></div>
+
+   <div id="auditFullTab">
+    <div class="toolbar">
+     <input id="auditDate" type="date" aria-label="تاريخ النشاط">
+     <input id="auditUser" placeholder="اسم المستخدم أو ID" aria-label="المستخدم">
+     <input id="auditTask" placeholder="اسم المهمة" aria-label="المهمة">
+     <button class="btn-start" onclick="loadAuditLog()">بحث / تحديث</button>
+     <button class="btn-reset" onclick="resetAllAuditFilters()"><span>🧹</span> مسح كل الفلاتر</button>
+    </div>
+    <input type="text" id="auditGlobalSearch" placeholder="🔍 بحث عام سريع في كل الأعمدة..." oninput="applyAuditTableFilters()">
+    <p id="auditMessage" role="status"></p>
+    <div class="table-responsive"><table class="supplier-table"><thead><tr id="auditLogHead"></tr></thead><tbody id="auditLogBody"></tbody></table></div>
+   </div>
+
+   <div id="auditEmployeeTab" style="display:none;">
+    <div class="toolbar">
+     <select id="empActivityEmployee" aria-label="الموظف"><option value="">كل الموظفين</option></select>
+     <input id="empActivityFrom" type="date" aria-label="من تاريخ">
+     <input id="empActivityTo" type="date" aria-label="إلى تاريخ">
+     <button class="btn-start" onclick="loadEmployeeActivity()">بحث / تحديث</button>
+     <button class="btn-reset" onclick="resetEmployeeActivityFilters()"><span>🧹</span> مسح الفلاتر</button>
+    </div>
+    <input type="text" id="empActivitySearch" placeholder="🔍 بحث سريع (اسم موظف أو مهمة)..." oninput="renderEmployeeActivityRows()">
+    <p id="empActivityMessage" role="status"></p>
+    <div class="table-responsive">
+     <table class="supplier-table">
+      <thead><tr><th>التاريخ</th><th>الوقت</th><th>الموظف</th><th>المهمة</th><th>حدث إيه</th></tr></thead>
+      <tbody id="empActivityBody"></tbody>
+     </table>
+    </div>
+   </div>
   </div>
  </div>
 </div>
@@ -1414,6 +1439,88 @@
         auditSortCol = null;
         document.querySelectorAll('.filter-icon').forEach(icon => { icon.style.color = ''; icon.style.opacity = '0.65'; });
         applyAuditTableFilters();
+    }
+
+    /* ================= تبويب "نشاط الموظفين" (بدأ إيه / أنهى إيه / حصل إيه فقط) ================= */
+    let empActivityRawRows = [];
+    let empActivityRequest = 0;
+
+    function switchAuditTab(tab) {
+        const fullTab = document.getElementById('auditFullTab');
+        const empTab = document.getElementById('auditEmployeeTab');
+        const fullBtn = document.getElementById('auditTabBtnFull');
+        const empBtn = document.getElementById('auditTabBtnEmp');
+        if (tab === 'employee') {
+            fullTab.style.display = 'none'; empTab.style.display = 'block';
+            fullBtn.className = 'btn-reset'; empBtn.className = 'btn-start';
+            populateEmpActivityEmployeeOptions();
+            if (!empActivityRawRows.length) loadEmployeeActivity();
+        } else {
+            empTab.style.display = 'none'; fullTab.style.display = 'block';
+            empBtn.className = 'btn-reset'; fullBtn.className = 'btn-start';
+        }
+    }
+
+    function populateEmpActivityEmployeeOptions() {
+        const select = document.getElementById('empActivityEmployee');
+        const current = select.value;
+        select.innerHTML = '<option value="">كل الموظفين</option>' +
+            employees.map(e => `<option value="${escapeHTML(e.name)}">${escapeHTML(e.name)}</option>`).join('');
+        select.value = current;
+    }
+
+    async function loadEmployeeActivity() {
+        const request = ++empActivityRequest;
+        const message = document.getElementById('empActivityMessage');
+        document.getElementById('empActivityBody').innerHTML = '';
+        message.textContent = 'جاري تحميل النشاط...';
+        try {
+            const result = await apiCall('employeeActivity', {
+                employee: document.getElementById('empActivityEmployee').value,
+                from: document.getElementById('empActivityFrom').value,
+                to: document.getElementById('empActivityTo').value
+            });
+            if (request !== empActivityRequest) return;
+            if (!result.success) throw new Error(result.message);
+            empActivityRawRows = result.rows || [];
+            if (result.truncated) showToast('تم عرض أول ' + empActivityRawRows.length + ' نشاط من إجمالي ' + result.total + '، ضيّق البحث بالتاريخ لعرض الباقي', true);
+            renderEmployeeActivityRows();
+        } catch(err) { if (request === empActivityRequest) message.textContent = err.message; }
+    }
+
+    function resetEmployeeActivityFilters() {
+        document.getElementById('empActivityEmployee').value = '';
+        document.getElementById('empActivityFrom').value = '';
+        document.getElementById('empActivityTo').value = '';
+        document.getElementById('empActivitySearch').value = '';
+        loadEmployeeActivity();
+    }
+
+    const EMP_ACTIVITY_ACTION_LABEL = { 'بدء': 'بدأ المهمة', 'إنهاء': 'أنهى المهمة', 'إلغاء': 'ألغى/أعاد فتح المهمة' };
+
+    function renderEmployeeActivityRows() {
+        const search = document.getElementById('empActivitySearch').value.trim().toLowerCase();
+        const body = document.getElementById('empActivityBody');
+        const message = document.getElementById('empActivityMessage');
+        body.innerHTML = '';
+        const rows = empActivityRawRows.filter(r => {
+            if (!search) return true;
+            const who = r.action === 'بدء' ? r.start : (r.action === 'إلغاء' ? r.cancelledBy : (r.end || r.start));
+            return String(r.task || '').toLowerCase().includes(search) || String(who || '').toLowerCase().includes(search);
+        });
+        rows.forEach(r => {
+            const tr = document.createElement('tr');
+            const time = r.actionDate ? String(r.actionDate).split(' ')[1] || '' : '';
+            const who = r.action === 'بدء' ? r.start : (r.action === 'إلغاء' ? (r.cancelledBy || r.start) : (r.end || r.start));
+            const what = (EMP_ACTIVITY_ACTION_LABEL[r.action] || r.action) + ' — ' + r.task;
+            [r.date, time, who, r.task, what].forEach(v => {
+                const td = document.createElement('td');
+                td.textContent = v || '';
+                tr.appendChild(td);
+            });
+            body.appendChild(tr);
+        });
+        message.textContent = rows.length ? rows.length + ' نشاط' : 'لا يوجد نشاط مطابق';
     }
 
     function applyAuditTableFilters() {

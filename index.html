@@ -560,7 +560,7 @@
     ===================================================================== */
     const API_URL = "https://script.google.com/macros/s/AKfycbwoQAZjxnb_74Jhgcm2NOlLRt8AHluGwlv189BgfayOpp6MoBTjy2iI9XhX48yW5le54A/exec";
 
-    const REFRESH_INTERVAL_MS = 8000; // كل كام ثانية يحصل تحديث لحظي للحالة
+    const REFRESH_INTERVAL_MS = 30000; // كل 30 ثانية يحصل تحديث لحظي للحالة (كان 8 ثواني)
 
     async function apiCall(action, params) {
         params = params || {};
